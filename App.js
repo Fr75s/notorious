@@ -79,6 +79,7 @@ export default function App() {
 		loadResourcesAsync();
 	}, []);
 
+	/*
 	useEffect(() => {
 		registerForPushNotificationsAsync()
 			.then(token => setExpoPushToken(token))
@@ -97,6 +98,7 @@ export default function App() {
 			Notifications.removeNotificationSubscription(responseListener.current);
 		}
 	}, []);
+	*/
 
 	if (!appIsReady) {
 		return null;
@@ -151,6 +153,7 @@ export default function App() {
 }
 
 // Notification Functions
+/*
 async function schedulePushNotification() {
 	await Notifications.scheduleNotificationAsync({
 		content: {
@@ -192,6 +195,7 @@ async function registerForPushNotificationsAsync() {
 
 	return token;
 }
+*/
 
 
 

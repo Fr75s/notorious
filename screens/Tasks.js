@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, Image, Alert, Switch, TextInput, Pressable, StyleSheet, ScrollView, SectionList } from "react-native";
+import { View, Text, Image, Alert, Switch, TextInput, Pressable, Vibration, StyleSheet, ScrollView, SectionList } from "react-native";
 
 import { createStackNavigator } from "@react-navigation/stack";
 import { useIsFocused } from "@react-navigation/native";
@@ -16,7 +16,10 @@ const LogoImage = require("../assets/images/logo_dark.png");
 
 // Partial Completions Variable
 
-const usePartialCompletions = false
+const usePartialCompletions = false;
+const clearOldFinished = true;
+
+const TIME_THRESHOLD = 604800000; //7 days
 
 // The data for each task on the list
 
@@ -76,6 +79,9 @@ async function saveTaskData() {
 		const taskDataString = JSON.stringify(taskData)
 		await AsyncStorage.setItem("@taskData", taskDataString);
 		console.log("Task Data successfully saved.");
+
+		//console.log(taskData);
+		//console.log(taskDataString);
 	} catch (e) {
 		console.log("There was an error saving task data:");
 		console.log(e);
@@ -97,10 +103,61 @@ function renderFooterItem({section}) {
 	return <View style={styles.listFooter} />
 }
 
+// Date string formatting
+function formatDateString(dateString, dateMode) {
+	let dateObj = {};
+	if (typeof(dateString) == typeof("a"))
+		dateObj = new Date(dateString);
+	else
+		dateObj = dateString;
+	if (dateMode === "date") {
+		return dateObj.toLocaleString([], {
+			weekday: "short",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		})
+	}
+	if (dateMode === "time") {
+		return dateObj.toLocaleString([], {
+			hour: "2-digit",
+			minute: "2-digit",
+		})
+	}
+}
+
+function clearOldFinishedTasks() {
+	let removeIndices = [];
+	for (let i = 0; i < taskData[2].data.length; i++) {
+		const currentDate = new Date();
+		const taskCompleteDate = new Date(taskData[2].data[i].completionDate);
+		
+		const difference = currentDate - taskCompleteDate;
+		
+		if (difference > TIME_THRESHOLD) {
+			console.log("Queue", taskData[2].data[i].name, "for deletion.");
+			removeIndices.push(i);
+		}
+	}
+
+	for (let i = taskData[2].data.length; i >= 0; i--) {
+		if (removeIndices.includes(i)) {
+			console.log("Removing task with index", i);
+
+			// Remove task, also cancel its notification just in case
+			cancelTaskNotification(taskData[2].data[i]);
+			taskData[2].data.splice(i, 1);
+		}
+	}
+
+	saveTaskData();
+}
+
 // Notification Tasks
 async function createTaskNotification(task) {
 	const currentTime = new Date()
-	if (currentTime < task.notifyDate) {
+	const notifyDate = new Date(task.notifyDate)
+	if (currentTime < notifyDate) {
 		console.log("Creating Notification for this task");
 		const notifID = task.name + ";" + task.creationDate;
 
@@ -115,13 +172,13 @@ async function createTaskNotification(task) {
 				}
 			},
 			identifier: notifID,
-			trigger: task.notifyDate,
+			trigger: { seconds: 2 },
 		});
 	}
 }
 
 async function cancelTaskNotification(task) {
-	console.log("Creating Notification for task", task.name);
+	console.log("Cancelling Notification for task", task.name);
 	const notifID = task.name + ";" + task.creationDate;
 	await Notifications.cancelScheduledNotificationAsync(notifID);
 }
@@ -133,6 +190,8 @@ let loadedTaskData = false;
 function TasksMain({ navigation }) {
 
 	const [localTaskData, setLocalTaskData] = React.useState(taskData);
+	
+	const [rearrangeOn, setRearrangeOn] = React.useState(false);
 
 	// Effect to set local task data on screen focus
 	const mainFocused = useIsFocused();
@@ -163,7 +222,7 @@ function TasksMain({ navigation }) {
 					let transferItem = taskData[0].data[taskIndexUnfinished];
 					transferItem.completionDate = new Date();
 					taskData[0].data.splice(taskIndexUnfinished, 1);
-					taskData[2].data.push(transferItem);
+					taskData[2].data.unshift(transferItem);
 
 					setLocalTaskData(taskData);
 					saveTaskData();
@@ -174,7 +233,7 @@ function TasksMain({ navigation }) {
 					let transferItem = taskData[1].data[taskIndexUnfinished];
 					transferItem.completionDate = new Date();
 					taskData[1].data.splice(taskIndexUnfinished, 1);
-					taskData[2].data.push(transferItem);
+					taskData[2].data.unshift(transferItem);
 
 					setLocalTaskData(taskData);
 					saveTaskData();
@@ -192,12 +251,14 @@ function TasksMain({ navigation }) {
 		AsyncStorage.getItem("@taskData")
 			.then((loadedData) => {
 				if (loadedData) {
-					console.log("Task Data successfully loaded.");
 					taskData = JSON.parse(loadedData);
-					setLocalTaskData(JSON.parse(loadedData))
+					clearOldFinishedTasks();
+					setLocalTaskData(JSON.parse(JSON.stringify(taskData)));
+					console.log("Task Data successfully loaded.");
 				} else {
 					console.log("No Task Data Exists.");
 				}
+
 				loadedTaskData = true;
 			})
 			.catch((err) => {
@@ -218,15 +279,17 @@ function TasksMain({ navigation }) {
 				renderItem={({item, index, section}) => <TaskView 
 					taskData={item}
 					completionState={getSectionIndex(section.title)}
+					usePartialCompletionIcons={usePartialCompletions}
 					clearAction={() => {
 						console.log("Prepare for Clearing");
-						Alert.alert("Delete This Task?", "", [
+						Alert.alert("Delete This Task?", "You will not be able to restore this task after deletion.", [
 							{
 								text: "Cancel",
 							},
 							{
 								text: "OK",
 								onPress: () => {
+									cancelTaskNotification(item);
 									taskData[getSectionIndex(section.title)].data.splice(index, 1);
 									setLocalTaskData(JSON.parse(JSON.stringify(taskData)));
 									saveTaskData();
@@ -237,25 +300,35 @@ function TasksMain({ navigation }) {
 							cancelable: true,
 						});
 					}}
+					infoAction={() => {
+						navigation.navigate("NewTask", {
+							mode: "modify",
+							task: item,
+							taskSection: getSectionIndex(section.title)
+						});
+					}}
 					checkAction={() => {
 						let transferItem = item;
 						
 						// Move From Unfinished
 						if (section.title === "unfinished" && usePartialCompletions) {
-							console.log("Mark Partially Completed");
+							taskData[getSectionIndex(section.title)].data.splice(index, 1);
+							taskData[1].data.unshift(transferItem);
+
+							console.log("Item Marked as Partially Completed");
 						} else if (section.title === "unfinished" || section.title === "partial") {
-							transferItem.completionDate = new Date();
+							transferItem.completionDate = (new Date()).toString();
 
 							taskData[getSectionIndex(section.title)].data.splice(index, 1);
 							cancelTaskNotification(item);
 
-							taskData[2].data.push(transferItem);
+							taskData[2].data.unshift(transferItem);
 							console.log("Item Marked as Completed");
 						} else {
 							transferItem.completionDate = null;
 
 							taskData[2].data.splice(index, 1);
-							taskData[0].data.push(transferItem)
+							taskData[0].data.unshift(transferItem)
 
 							createTaskNotification(item);
 							console.log("Item Marked as Uncompleted");
@@ -264,6 +337,46 @@ function TasksMain({ navigation }) {
 						setLocalTaskData(JSON.parse(JSON.stringify(taskData)));
 						saveTaskData();
 					}}
+					longInfoAction={() => {
+						Vibration.vibrate(10);
+						setRearrangeOn(!rearrangeOn);
+					}}
+					rearrangeMode={rearrangeOn}
+					upperRearrangeAction={() => {
+						console.log("Moving", item.name, "Up");
+
+						if (index > 0) {
+							const transferItem = item;
+
+							let firstPart = section.data.slice(0, index);
+							let secondPart = section.data.slice(index + 1);
+
+							secondPart.unshift(firstPart.pop());
+							firstPart.push(transferItem);
+
+							taskData[getSectionIndex(section.title)].data = firstPart.concat(secondPart);
+							setLocalTaskData(JSON.parse(JSON.stringify(taskData)));
+							saveTaskData();
+						}
+
+					}}
+					lowerRearrangeAction={() => {
+						console.log("Moving", item.name, "Down");
+
+						if (index < section.data.length - 1) {
+							const transferItem = item;
+							
+							let firstPart = section.data.slice(0, index);
+							let secondPart = section.data.slice(index + 1);
+
+							firstPart.push(secondPart.shift());
+							secondPart.unshift(transferItem);
+
+							taskData[getSectionIndex(section.title)].data = firstPart.concat(secondPart);
+							setLocalTaskData(JSON.parse(JSON.stringify(taskData)));
+							saveTaskData();
+						}
+					}}
 				/>}
 				renderSectionFooter={renderFooterItem}
 			/>
@@ -271,38 +384,48 @@ function TasksMain({ navigation }) {
 			<FAB 
 				icon={"plus"}
 				onPress={() => {
-					navigation.navigate("NewTask");
+					navigation.navigate("NewTask", {
+						mode: "addNew",
+					});
 				}}
 			/>
 		</View>
 	)
 }
 
-let notifDateInitTime = false;
+function NewTask({ route, navigation }) {
+	// For auto-skipping to description
+	const descRef = useRef();
 
-function NewTask({ navigation }) {
+	// Handle modes
+	const mode = route.params.mode;
+	let taskMod = {};
+	if (route.params.hasOwnProperty("task")) {
+		taskMod = route.params.task;
+		taskModSectionIndex = route.params.taskSection;
+	}
+
 	// Task Name/Description Initialization
-	const [taskName, onTaskName] = React.useState("");
-	const [taskDesc, onTaskDesc] = React.useState("");
+	const [taskName, onTaskName] = React.useState(mode === "addNew" ? "" : taskMod.name);
+	const [taskDesc, onTaskDesc] = React.useState(mode === "addNew" ? "" : taskMod.desc);
 
 	// Notification Date Default (Next Hour)
-	const [notifDate, setNotifDate] = React.useState(new Date());
-	if (!notifDateInitTime) {
+	let defaultDate = new Date()
+	const [notifDate, setNotifDate] = React.useState(mode === "addNew" ? defaultDate : taskMod.notifyDate);
+	if (notifDate === defaultDate) {
 		notifDate.setHours(notifDate.getHours() + Math.ceil(notifDate.getMinutes() / 60));
 		notifDate.setMinutes(0, 0, 0);
-		notifDateInitTime = true
 	}
 
 	// Notification Toggle Initialization
-	const [notifEnabled, setNotifEnabled] = React.useState(true);
-
-	// For auto-skipping to description
-	const descRef = useRef();
+	const [notifEnabled, setNotifEnabled] = React.useState(mode === "addNew" ? true : taskMod.notify);
 
 	return (
 		<View style={globalStyles.screen}>
 			<ScrollView style={globalStyles.scrollScreen} contentContainerStyle={globalStyles.scrollScreenContent}>
-				<Text style={globalStyles.h1}>Add a new task</Text>
+				<Text style={globalStyles.h1}>
+					{mode === "addNew" ? "Add a new task" : "Modify this task"}
+				</Text>
 
 				<TextInput 
 					style={[styles.taskInput, styles.taskNameInput]}
@@ -352,19 +475,14 @@ function NewTask({ navigation }) {
 								value: notifDate,
 								accentColor: "#74aaff",
 								onChange: (event, selectedDate) => {
-									setNotifDate(selectedDate);
+									setNotifDate(selectedDate.toString());
 								},
 								mode: "date"
 							});
 						}}
 					>
 						<Text style={globalStyles.h3}>
-							{notifDate.toLocaleString([], {
-								weekday: "short",
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
+							{formatDateString(notifDate, "date")}
 						</Text>
 					</Pressable>
 					<Pressable
@@ -374,17 +492,14 @@ function NewTask({ navigation }) {
 								value: notifDate,
 								accentColor: "#74aaff",
 								onChange: (event, selectedDate) => {
-									setNotifDate(selectedDate);
+									setNotifDate(selectedDate.toString());
 								},
 								mode: "time"
 							});
 						}}
 					>
 						<Text style={globalStyles.h3}>
-							{notifDate.toLocaleTimeString([], {
-								hour: "2-digit",
-								minute: "2-digit",
-							})}
+							{formatDateString(notifDate, "time")}
 						</Text>
 					</Pressable>
 				</View>
@@ -393,7 +508,8 @@ function NewTask({ navigation }) {
 				icon={"check"}
 				disabled={true}
 				onPress={() => {
-					const creationDate = new Date();
+					const creationDate = (mode === "addNew" ? (new Date()).toString() : taskMod.creationDate);
+					const completionDate = (mode === "addNew" ? null : taskMod.completionDate);
 
 					// Only Create a task if it has a name
 					if (taskName !== "") {
@@ -402,20 +518,37 @@ function NewTask({ navigation }) {
 							desc: taskDesc,
 	
 							notify: notifEnabled,
-							notifyDate: notifDate,
+							notifyDate: notifDate.toString(),
 							creationDate: creationDate,
-							completionDate: null,
+							completionDate: completionDate,
 						}
-	
-						console.log("Added Task with Name", taskName, "on", creationDate.toLocaleString());
-						taskData[0].data.push(newTaskObj);
-	
-						if (notifEnabled)
-							createTaskNotification(newTaskObj);
-	
-						saveTaskData();
-	
-						navigation.navigate("TasksMain");
+
+						if (mode === "addNew") {
+							taskData[0].data.unshift(newTaskObj);
+		
+							if (notifEnabled) {
+								createTaskNotification(newTaskObj);
+							}
+
+							saveTaskData();
+							console.log("Added Task with Name", taskName, "on", creationDate.toLocaleString());
+		
+							navigation.navigate("TasksMain");
+						} else if (mode === "modify") {
+							// Get the index of the task in the data list it corresponds to
+							const taskIndex = taskData[taskModSectionIndex].data.findIndex( s => (s.name + ";" + s.creationDate === taskMod.name + ";" + taskMod.creationDate));
+							taskData[taskModSectionIndex].data[taskIndex] = newTaskObj;
+
+							cancelTaskNotification(newTaskObj);
+							if (notifEnabled) {
+								createTaskNotification(newTaskObj);
+							}
+
+							saveTaskData();
+							console.log("Modifications applied to task.");
+
+							navigation.navigate("TasksMain");
+						}
 					}
 				}}
 			/>
@@ -449,7 +582,7 @@ const styles = StyleSheet.create({
 		position: "absolute",
 		width: 250,
 		height: 62.5,
-		left: 0,
+		left: 10,
 		top: 10,
 	},
 
@@ -457,7 +590,7 @@ const styles = StyleSheet.create({
 
 	listBox: {
 		width: "85%",
-		marginTop: 75,
+		marginTop: 65,
 	},
 
 	listFooter: {

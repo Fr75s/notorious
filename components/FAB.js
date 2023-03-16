@@ -1,7 +1,9 @@
-import { Pressable } from "react-native";
+import { Pressable, Vibration } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 export default function FAB({ icon, onPress }) {
+	
+	
 	return (
 		<Pressable 
 			style={() => [
@@ -17,7 +19,6 @@ export default function FAB({ icon, onPress }) {
 					width: 65,
 					height: 65,
 
-					//right: 20,
 					bottom: 15,
 					borderRadius: (65 / 2),
 
@@ -28,7 +29,10 @@ export default function FAB({ icon, onPress }) {
 				color: "#f2f6ff",
 				radius: (65 / 2),
 			}}
-			onPress={() => onPress()}
+			onPress={() => {
+				Vibration.vibrate(10);
+				onPress()
+			}}
 		>
 			<MaterialCommunityIcons name={icon} size={25} color={"#16171a"} />
 		</Pressable>

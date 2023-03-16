@@ -1,16 +1,52 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Alert, Pressable, StyleSheet } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-export default function TaskView({ taskData, completionState, clearAction, checkAction }) {
+export default function TaskView({ taskData, completionState, usePartialCompletionIcons, rearrangeMode, clearAction, checkAction, infoAction, longInfoAction, upperRearrangeAction, lowerRearrangeAction }) {
 	
 	let checkColor = "#7c7f8e"
-	if (completionState === 2) {
-		checkColor = "#74ffaa"
+	if (!rearrangeMode) {
+		if (completionState === 1) {
+			checkColor = "#f2f6ff"
+		}
+		if (completionState === 2) {
+			checkColor = "#74ffaa"
+		}
 	}
+
+	let upperIcon = "close";
+	if (rearrangeMode) {
+		upperIcon = "chevron-up";
+	}
+
+	let lowerIcon = "check";
+	if (rearrangeMode) {
+		lowerIcon = "chevron-down";
+	} else {
+		if (usePartialCompletionIcons) {
+			switch (completionState) {
+				case 0:
+					lowerIcon = "circle-outline";
+					break;
+				case 1:
+					lowerIcon = "circle-half-full"
+					break;
+				case 2:
+					lowerIcon = "circle"
+					break;
+			}
+		}
+	}
+
+	const iconSize = 30;
 	
 	return (
 		<View style={styles.back}>
-			<View style={styles.info}>
+			<Pressable
+				style={styles.info}
+				onPress={() => infoAction()}
+				delayLongPress={300}
+				onLongPress={() => longInfoAction()}
+			>
 				<Text 
 					style={styles.title}
 					numberOfLines={1}
@@ -19,19 +55,37 @@ export default function TaskView({ taskData, completionState, clearAction, check
 					style={styles.desc}
 					numberOfLines={1}
 				>{taskData.desc}</Text>
-			</View>
+			</Pressable>
 			<View style={styles.actions}>
 				<Pressable
 					style={styles.actionButton}
-					onPress={() => clearAction()}
+					onPress={() => {
+						if (rearrangeMode)
+							upperRearrangeAction()
+						else
+							clearAction()
+					}}
 				>
-					<MaterialCommunityIcons name="close" size={30} color={"#7c7f8e"} />
+					<MaterialCommunityIcons name={upperIcon} size={iconSize} color={"#7c7f8e"} />
 				</Pressable>
+				{/*
 				<Pressable
 					style={styles.actionButton}
-					onPress={() => checkAction()}
+					onPress={() => infoAction()}
 				>
-					<MaterialCommunityIcons name="check" size={30} color={checkColor}/>
+					<MaterialCommunityIcons name="pencil" size={iconSize} color={"#7c7f8e"}/>
+				</Pressable>
+				*/}
+				<Pressable
+					style={styles.actionButton}
+					onPress={() => {
+						if (rearrangeMode)
+							lowerRearrangeAction()
+						else
+							checkAction()
+					}}
+				>
+					<MaterialCommunityIcons name={lowerIcon} size={iconSize} color={checkColor}/>
 				</Pressable>
 			</View>
 		</View>
@@ -55,14 +109,16 @@ const styles = StyleSheet.create({
 	},
 
 	info: {
-		flex: 6,
+		flex: 7,
 	},
 
 	actions: {
 		flex: 1,
 		flexDirection: "column",
-		alignItems: "flex-end",
+		alignItems: "center",
 		justifyContent: "center",
+
+		//borderWidth: 2,
 	},
 
 	actionButton: {

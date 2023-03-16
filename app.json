@@ -10,12 +10,22 @@
     "primaryColor": "#74aaff",
 
     "splash": {
-      "image": "./assets/old_icons/splash.png",
+      "image": "./assets/icons/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#16171a"
     },
     "assetBundlePatterns": [
       "**/*"
+    ],
+
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icons/notification-icon.png",
+          "color": "#74aaff"
+        }
+      ]
     ],
 
     "ios": {
