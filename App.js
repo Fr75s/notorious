@@ -12,12 +12,19 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { MenuProvider } from "react-native-popup-menu";
 
-import { globalStyles } from "./components/GlobalStyles.js";
+import store from "./components/redux/store";
+import { setSettings } from "./components/redux/SettingActions";
+import { setTaskData } from "./components/redux/TaskActions";
+import { Provider } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import TasksScreen from "./screens/Tasks.js";
 import RecurScreen from "./screens/Recur.js";
 import NotesScreen from "./screens/Notes.js";
 import CalendarScreen from "./screens/Calendar.js";
+import SettingsScreen from "./screens/Settings.js";
 
 Notifications.setNotificationHandler({
 	handleNotification: async() => ({
@@ -57,16 +64,33 @@ export default function App() {
 	useEffect(() => {
 		async function loadResourcesAsync() {
 			try {
+				// Do not hide splash until everything's loaded
 				SplashScreen.preventAutoHideAsync();
 
+				// Set the navigation bar color
 				NavigationBar.setBackgroundColorAsync("#16171a");
 
+				// Load fonts
 				const fontAssets = Font.loadAsync({
 					"Inter-Light": require("./assets/fonts/Inter/Inter-Light.ttf"),
 					"Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.ttf"),
 					"Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.ttf"),
 				});
 
+				// Load Settings
+				const loadedSettings = await AsyncStorage.getItem("@settings");
+				if (loadedSettings) {
+					console.log("Preloaded Settings:", loadedSettings);
+					store.dispatch(setSettings(JSON.parse(loadedSettings)));
+				}
+
+				const loadedTasks = await AsyncStorage.getItem("@taskData");
+				if (loadedTasks) {
+					console.log("Preloaded Tasks:", loadedTasks);
+					store.dispatch(setTaskData(JSON.parse(loadedTasks)));
+				}
+
+				// Return fonts
 				await Promise.all([ fontAssets ]);
 			} catch (e) {
 				console.warn(e)
@@ -79,123 +103,72 @@ export default function App() {
 		loadResourcesAsync();
 	}, []);
 
-	/*
-	useEffect(() => {
-		registerForPushNotificationsAsync()
-			.then(token => setExpoPushToken(token))
-			.catch((err) => { console.log("whelp.", err)});
-
-		notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-			setNotification(notification);
-		});
-
-		responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-			console.log(response);
-		});
-
-		return () => {
-			Notifications.removeNotificationSubscription(notificationListener.current);
-			Notifications.removeNotificationSubscription(responseListener.current);
-		}
-	}, []);
-	*/
-
 	if (!appIsReady) {
 		return null;
 	}
 
 	return (
-		<NavigationContainer>
-			<Tab.Navigator 
-				sceneContainerStyle={styles.navScreens} 
-				screenOptions={navigationOpts}
-			>
-				<Tab.Screen 
-					name="Tasks" 
-					component={TasksScreen}
-					options = {{
-						tabBarIcon: ({ color, size }) => (
-							<MaterialCommunityIcons name="check" color={color} size={size} />
-						)
-					}}
-				/>
-				<Tab.Screen 
-					name="Reocurring Tasks" 
-					component={RecurScreen} 
-					options = {{
-						tabBarIcon: ({ color, size }) => (
-							<MaterialCommunityIcons name="alarm-check" color={color} size={size} />
-						)
-					}}
-				/>
-				<Tab.Screen 
-					name="Notes" 
-					component={NotesScreen} 
-					options = {{
-						tabBarIcon: ({ color, size }) => (
-							<MaterialCommunityIcons name="notebook" color={color} size={size} />
-						)
-					}}
-				/>
-				<Tab.Screen 
-					name="Calendar" 
-					component={CalendarScreen} 
-					options = {{
-						tabBarIcon: ({ color, size }) => (
-							<MaterialCommunityIcons name="calendar" color={color} size={size} />
-						)
-					}}
-				/>
-			</Tab.Navigator>
-			<StatusBar backgroundColor="#1e2126" style="light"/>
-		</NavigationContainer>
+		<Provider
+			store={store}
+		>
+			<MenuProvider>
+				<NavigationContainer>
+					<Tab.Navigator 
+						sceneContainerStyle={styles.navScreens} 
+						screenOptions={navigationOpts}
+					>
+						<Tab.Screen 
+							name="Tasks" 
+							component={TasksScreen}
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="check" color={color} size={size} />
+								)
+							}}
+						/>
+						<Tab.Screen 
+							name="Reocurring Tasks" 
+							component={RecurScreen} 
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="alarm-check" color={color} size={size} />
+								)
+							}}
+						/>
+						<Tab.Screen 
+							name="Notes" 
+							component={NotesScreen} 
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="notebook" color={color} size={size} />
+								)
+							}}
+						/>
+						<Tab.Screen 
+							name="Calendar" 
+							component={CalendarScreen} 
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="calendar" color={color} size={size} />
+								)
+							}}
+						/>
+						<Tab.Screen 
+							name="Settings" 
+							component={SettingsScreen} 
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="cog" color={color} size={size} />
+								)
+							}}
+						/>
+					</Tab.Navigator>
+					<StatusBar backgroundColor="#1e2126" style="light"/>
+				</NavigationContainer>
+			</MenuProvider>
+		</Provider>
 	);
 }
-
-// Notification Functions
-/*
-async function schedulePushNotification() {
-	await Notifications.scheduleNotificationAsync({
-		content: {
-			title: "Wow!",
-			body: "A notification!",
-		},
-		trigger: { seconds: 2 },
-	})
-}
-
-async function registerForPushNotificationsAsync() {
-	let token;
-
-	if (Platform.OS === "android") {
-		await Notifications.setNotificationChannelAsync("default", {
-			name: "default",
-			importance: Notifications.AndroidImportance.DEFAULT,
-			vibrationPattern: [0, 250, 250, 250],
-			lightColor: "#FF231F7C",
-		});
-	}
-
-	const { status: existingStatus } = await Notifications.getPermissionsAsync();
-	let finalStatus = existingStatus;
-
-	if (existingStatus !== "granted") {
-		const { status } = await Notifications.requestPermissionsAsync();
-		finalStatus = status;
-	}
-	if (finalStatus !== "granted") {
-		alert("Could not get push notification token!");
-		return;
-	}
-
-	token = (await Notifications.getExpoPushTokenAsync({
-		projectId: "notorious",
-	})).data;
-	console.log("NOTIF TOKEN:", token)
-
-	return token;
-}
-*/
 
 
 

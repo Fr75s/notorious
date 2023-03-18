@@ -1,7 +1,7 @@
 import { Pressable, Vibration } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-export default function FAB({ icon, onPress }) {
+export default function FAB({ icon, onPress, corner }) {
 	
 	
 	return (
@@ -18,6 +18,9 @@ export default function FAB({ icon, onPress }) {
 
 					width: 65,
 					height: 65,
+
+					left: (corner === 1 ? 15 : null),
+					right: (corner === 2 ? 15 : null),
 
 					bottom: 15,
 					borderRadius: (65 / 2),
