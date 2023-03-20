@@ -15,6 +15,21 @@ export const globalStyles = StyleSheet.create({
 		width: "100%",
 
 		paddingTop: 20,
+		//borderWidth: 2,
+	},
+
+	modal: {
+		//flex: 1,
+		//alignItems: "center",
+		justifyContent: "center",
+		backgroundColor: "#26282d",
+		
+		//borderWidth: 2,
+
+		//height: 200,
+		padding: 30,
+		borderRadius: 20,
+		elevation: 5,
 	},
 
 	scrollScreenContent: {
@@ -53,4 +68,84 @@ export const globalStyles = StyleSheet.create({
 		fontSize: 14,
 		color: "#bdc0c7",
 	},
+
+	smallText: {
+		fontFamily: "Inter-Medium",
+		fontSize: 12,
+		color: "#7c7f8e",
+	}
 })
+
+export const globalMenuStyles = {
+	optionsContainer: {
+		backgroundColor: "#16171a",
+		borderRadius: 15,
+		marginTop: 30,
+	},
+	optionText: {
+		color: "#f2f6ff",
+		fontFamily: "Inter-Medium",
+		fontSize: 16,
+		color: "#f2f6ff",
+		padding: 10,
+	}
+}
+
+export const globalMDStyles = {
+	container: {
+		width: "85%",
+		backgroundColor: "#00000000"
+	},
+
+	codespan: {
+		fontFamily: "Meslo-Regular",
+		fontSize: 16,
+		color: "#f2f6ff",
+		backgroundColor: "#16171a"
+	},
+
+	code: {
+		padding: 20,
+		borderRadius: 10,
+		width: "100%",
+		backgroundColor: "#16171a"
+	},
+
+	h1: {
+		fontFamily: "Inter-Medium",
+		fontSize: 22,
+		color: "#f2f6ff",
+
+		marginTop: 10,
+		paddingBottom: 5,
+		borderBottomWidth: 1,
+		borderBottomColor: "#7c7f8e",
+	},
+
+	h2: {
+		fontFamily: "Inter-Light",
+		fontSize: 20,
+		color: "#f2f6ff",
+		
+		marginTop: 5,
+		marginBottom: 5,
+	},
+
+	h3: {
+		fontFamily: "Inter-Medium",
+		fontSize: 16,
+		color: "#bdc0c7",
+	},
+
+	text: {
+		fontFamily: "Inter-Light",
+		fontSize: 16,
+		color: "#f2f6ff",
+	},
+
+	link: {
+		fontFamily: "Inter-Light",
+		fontSize: 16,
+		color: "#74aaff",
+	}
+}

@@ -22,7 +22,7 @@ import {
 	modifyTask,
 	changeTaskSection,
 } from "../components/redux/TaskActions";
-import { globalStyles } from "./../components/GlobalStyles.js";
+import { globalMenuStyles, globalStyles } from "./../components/GlobalStyles.js";
 import TaskView from "./../components/TaskView.js";
 import FAB from "./../components/FAB.js";
 
@@ -44,6 +44,7 @@ keep: Whether to keep the task after 1 day after completion
 
 creationDate: When this task was created
 completionDate: When this task was completed
+repeatInterval: Time until this task gets notified again
 notifyDate: Time when the user should be notified
 */
 
@@ -76,6 +77,18 @@ function getSectionIndex(sectionName) {
 	}
 }
 
+// Get Interval title from shorthand interval
+function getNotifIntervalTitle(shorthand) {
+	switch (shorthand) {
+		case "5sec": return "Every 5 Seconds";
+		case "day": return "Every Day";
+		case "week": return "Every Week";
+		case "month": return "Every Month";
+		case "year": return "Every Year";
+		default: return "";
+	}
+}
+
 // Save Data
 async function saveTaskData() {
 	try {
@@ -104,6 +117,16 @@ function renderFooterItem({section}) {
 
 	// If neither, add a small line
 	return <View style={styles.listFooter} />
+}
+
+// Search Filtering
+function searchFilterCheck(itemName, filter) {
+	// NOTE: This assumes filter is already uppercase
+	if (settings.strictFiltering) {
+		return itemName.toUpperCase().indexOf(filter) === 0;
+	} else {
+		return itemName.toUpperCase().indexOf(filter) > -1;
+	}
 }
 
 // Date string formatting
@@ -166,19 +189,67 @@ async function createTaskNotification(task) {
 	if (currentTime < notifyDate) {
 		console.log("Creating Notification for task", task.id);
 
-		await Notifications.scheduleNotificationAsync({
+		let notificationTrigger = null; //notifyDate,
+		switch (task.repeatInterval) {
+			case "5sec": {
+				notificationTrigger = {
+					seconds: 60,
+					repeats: true,
+				};
+				break;
+			}
+			case "day": {
+				notificationTrigger = {
+					hour: notifyDate.getHours(),
+					minute: notifyDate.getMinutes(),
+					repeats: true,
+				};
+				break;
+			}
+			case "week": {
+				notificationTrigger = {
+					hour: notifyDate.getHours(),
+					minute: notifyDate.getMinutes(),
+					weekday: notifyDate.getDay() + 1,
+					repeats: true,
+				};
+				break;
+			}
+			// Guess who has no monthly trigger?
+			case "year": {
+				notificationTrigger = {
+					hour: notifyDate.getHours(),
+					minute: notifyDate.getMinutes(),
+					day: notifyDate.getDate(),
+					month: notifyDate.getMonth() + 1,
+					repeats: true,
+				};
+				break;
+			}
+			default: {
+				notificationTrigger = notifyDate;
+				break;
+			}
+		}
+
+		console.log(notificationTrigger);
+
+		const result = await Notifications.scheduleNotificationAsync({
 			content: {
 				title: task.name,
 				body: task.desc,
 				color: "#74aaff",
 				categoryIdentifier: "taskNotifActions",
 				data: {
-					taskName: task.name
+					taskName: task.name,
 				}
 			},
 			identifier: task.id,
-			trigger: notifyDate,
+			trigger: notificationTrigger,//notifyDate,
 		});
+		if (result) {
+			console.log("Notification successfully created (", task.id, ")");
+		}
 	}
 }
 
@@ -192,6 +263,7 @@ async function cancelTaskNotification(task) {
 function TasksMain({ navigation }) {
 
 	const [localTaskData, setLocalTaskData] = React.useState(tasks);	
+	const [localTaskFilter, setLocalTaskFilter] = React.useState("");
 	const [rearrangeOn, setRearrangeOn] = React.useState(false);
 
 	function updateLocalTaskData() {
@@ -205,11 +277,14 @@ function TasksMain({ navigation }) {
 	// Effect to handle notifications
 	useEffect(() => {
 		const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+			// Get Notification Data
+			const notifID = response.notification.request.identifier
+			const notifData = response.notification.request.content.data
+
+			// Handle Completed Notifications
 			if (response.actionIdentifier == "markCompleted") {
 				// Get vars
-				const notifID = response.notification.request.identifier
-				const notifData = response.notification.request.content.data
-
+				
 				// Clear the notification
 				Notifications.dismissNotificationAsync(notifID);
 
@@ -219,26 +294,41 @@ function TasksMain({ navigation }) {
 				const taskIndexUnfinished = tasks[0].data.findIndex( s => (s.id === notifID) );
 				const taskIndexPartial = tasks[1].data.findIndex( s => (s.id === notifID) );
 
+				console.log(taskIndexPartial);
+
 				if (taskIndexUnfinished >= 0) {
 					const taskID = tasks[0].data[taskIndexUnfinished].id;
+					
+					const modItem = tasks[0].data[taskIndexUnfinished];
+					modItem.notify = false;
+					modItem.completionDate = new Date();
+
 					//transferItem.completionDate = new Date();
 					//taskData[0].data.splice(taskIndexUnfinished, 1);
 					//taskData[2].data.unshift(transferItem);
 
 					store.dispatch(changeTaskSection(taskID, 0, 2, new Date()));
+					store.dispatch(modifyTask(taskID, 0, modItem));
+					cancelTaskNotification(tasks[0].data[taskIndexUnfinished]);
 
 					updateLocalTaskData();
 					saveTaskData();
 
 					console.log("Task Successfully Marked Completed.");
 				}
-				if (taskIndexPartial >= 1) {
-					const taskID = tasks[1].data[taskIndexUnfinished].id;
+				if (taskIndexPartial >= 0) {
+					const taskID = tasks[1].data[taskIndexPartial].id;
 					//transferItem.completionDate = new Date();
 					//taskData[1].data.splice(taskIndexUnfinished, 1);
 					//taskData[2].data.unshift(transferItem);
 
+					const modItem = tasks[1].data[taskIndexPartial];
+					modItem.notify = false;
+					modItem.completionDate = new Date();
+
 					store.dispatch(changeTaskSection(taskID, 1, 2, new Date()));
+					store.dispatch(modifyTask(taskID, 1, modItem));
+					cancelTaskNotification(tasks[1].data[taskIndexPartial]);
 
 					updateLocalTaskData();
 					saveTaskData();
@@ -253,6 +343,7 @@ function TasksMain({ navigation }) {
 	// Listen for focus
 	useEffect(() => {
 		const focusListener = navigation.addListener("focus", () => {
+			clearOldFinishedTasks();
 			setLocalTaskData(JSON.parse(JSON.stringify(tasks)));
 		});
 		return focusListener;
@@ -277,12 +368,41 @@ function TasksMain({ navigation }) {
 		<View style={globalStyles.screen}>
 			<Image style={styles.logo} source={LogoImage} />
 			
+			<View style={styles.searchBar}>
+				<View style={{ 
+					flex: 1, 
+					flexDirection: "row", 
+					height: 30,
+					alignItems: "center",
+					justifyContent: "center",
+				}}>
+					<View style={styles.searchIcon}>
+						<MaterialCommunityIcons 
+							name={"magnify"} 
+							size={25} 
+							color={"#f2f6ff"} 
+						/>
+					</View>
+					<TextInput
+						style={styles.searchInput}
+						placeholderTextColor={"#7c7f8e"}
+						selectionColor={"#74aaff"}
+						placeholder={"Search..."}
+
+						onChangeText={(currentValue) => {
+							setLocalTaskFilter(currentValue.toUpperCase());
+						}}
+						defaultValue={""}
+					/>
+				</View>
+			</View>
+
 			<SectionList
 				style={styles.listBox}
 				showsVerticalScrollIndicator={false}
 
 				sections={localTaskData}
-				renderItem={({item, index, section}) => <TaskView 
+				renderItem={({item, index, section}) => (searchFilterCheck(item.name, localTaskFilter) ? <TaskView 
 					taskData={item}
 					completionState={getSectionIndex(section.title)}
 					usePartialCompletionIcons={settings.usePartialCompletions}
@@ -367,16 +487,6 @@ function TasksMain({ navigation }) {
 						console.log("Moving", item.name, "Up");
 
 						if (index > 0) {
-							//const transferItem = item;
-
-							//let firstPart = section.data.slice(0, index);
-							//let secondPart = section.data.slice(index + 1);
-
-							//secondPart.unshift(firstPart.pop());
-							//firstPart.push(transferItem);
-
-							//taskData[getSectionIndex(section.title)].data = firstPart.concat(secondPart);
-							
 							store.dispatch(moveTask(item.id, getSectionIndex(section.title), true));
 							
 							updateLocalTaskData();
@@ -388,23 +498,13 @@ function TasksMain({ navigation }) {
 						console.log("Moving", item.name, "Down");
 
 						if (index < section.data.length - 1) {
-							//const transferItem = item;
-							
-							//let firstPart = section.data.slice(0, index);
-							//let secondPart = section.data.slice(index + 1);
-
-							//firstPart.push(secondPart.shift());
-							//secondPart.unshift(transferItem);
-
-							//taskData[getSectionIndex(section.title)].data = firstPart.concat(secondPart);
-							
 							store.dispatch(moveTask(item.id, getSectionIndex(section.title), false));
 							
 							updateLocalTaskData();
 							saveTaskData();
 						}
 					}}
-				/>}
+				/> : null)}
 				renderSectionFooter={renderFooterItem}
 			/>
 
@@ -424,20 +524,7 @@ function TasksMain({ navigation }) {
 				<MenuTrigger>
 					<MaterialCommunityIcons name={"menu"} size={30} color={"#f2f6ff"} />
 				</MenuTrigger>
-				<MenuOptions customStyles={{
-					optionsContainer: {
-						backgroundColor: "#16171a",
-						borderRadius: 15,
-						marginTop: 30,
-					},
-					optionText: {
-						color: "#f2f6ff",
-						fontFamily: "Inter-Medium",
-						fontSize: 16,
-						color: "#f2f6ff",
-						padding: 15,
-					}
-				}}>
+				<MenuOptions customStyles={globalMenuStyles}>
 					<MenuOption 
 						text="Clear All Queued Notifications"
 						onSelect={() => {
@@ -499,6 +586,24 @@ function TasksMain({ navigation }) {
 							});
 						}}
 					/>
+					<MenuOption 
+						text={"Log Scheduled"}
+						onSelect={() => {
+							Notifications.getAllScheduledNotificationsAsync()
+								.then((response) => {
+									for (let i = 0; i < response.length; i++) {
+										console.log(response[i].identifier);
+										console.log(response[i].trigger);
+									}
+								})
+								.catch(() => console.log("Couldn't get them :("));
+						}}
+					/>
+					{/*
+					<MenuOption 
+						text={"Local Filter: " + localTaskFilter}
+					/>
+					*/}
 				</MenuOptions>
 			</Menu>
 
@@ -533,6 +638,7 @@ function NewTask({ route, navigation }) {
 
 	// Notification Toggle Initialization
 	const [notifEnabled, setNotifEnabled] = React.useState(mode === "addNew" ? true : taskMod.notify);
+	const [notifInterval, setNotifInterval] = React.useState(mode === "addNew" ? null : taskMod.repeatInterval);
 
 	return (
 		<View style={globalStyles.screen}>
@@ -586,7 +692,7 @@ function NewTask({ route, navigation }) {
 						style={{ flex: 1, padding: 15 }}
 						onPress={() => {
 							DateTimePickerAndroid.open({
-								value: notifDate,
+								value: new Date(notifDate),
 								accentColor: "#74aaff",
 								onChange: (event, selectedDate) => {
 									setNotifDate(selectedDate.toString());
@@ -603,7 +709,7 @@ function NewTask({ route, navigation }) {
 						style={{ flex: 1, alignItems: "flex-end", padding: 15 }}
 						onPress={() => {
 							DateTimePickerAndroid.open({
-								value: notifDate,
+								value: new Date(notifDate),
 								accentColor: "#74aaff",
 								onChange: (event, selectedDate) => {
 									setNotifDate(selectedDate.toString());
@@ -617,6 +723,36 @@ function NewTask({ route, navigation }) {
 						</Text>
 					</Pressable>
 				</View>
+
+				<View style={[globalStyles.row, { width: "85%", marginTop: 20 }]}>
+					<Menu style={{ flex: 3 }}>
+						<MenuTrigger>
+							<Text style={[globalStyles.h3, {flex: 1, padding: 15}]}>Select Repeat Interval...</Text>
+						</MenuTrigger>
+						<MenuOptions customStyles={globalMenuStyles}>
+							<MenuOption 
+								text={"Never"}
+								onSelect={() => {setNotifInterval(null)}}
+							/>
+							<MenuOption 
+								text={"Every Day"}
+								onSelect={() => {setNotifInterval("day")}}
+							/>
+							<MenuOption 
+								text={"Every Week"}
+								onSelect={() => {setNotifInterval("week")}}
+							/>
+							<MenuOption 
+								text={"Every Year"}
+								onSelect={() => {setNotifInterval("year")}}
+							/>
+						</MenuOptions>
+					</Menu>
+					<Text style={[globalStyles.h3, {flex: 1, alignItems: "flex-end"}]}>
+						{getNotifIntervalTitle(notifInterval)}
+					</Text>
+				</View>
+				
 			</ScrollView>
 			<FAB 
 				icon={"check"}
@@ -634,6 +770,7 @@ function NewTask({ route, navigation }) {
 	
 							notify: notifEnabled,
 							notifyDate: notifDate.toString(),
+							repeatInterval: notifInterval,
 							creationDate: creationDate,
 							completionDate: completionDate,
 						}
@@ -655,11 +792,18 @@ function NewTask({ route, navigation }) {
 							console.log("-------");
 							store.dispatch(modifyTask(taskMod.id, taskModSectionIndex, newTaskObj));
 
-							cancelTaskNotification(newTaskObj);
-							console.log(notifEnabled);
-							if (notifEnabled) {
-								createTaskNotification(newTaskObj);
-							}
+							//cancelTaskNotification(taskMod);
+							Notifications.cancelScheduledNotificationAsync(taskMod.id)
+								.then(() => {
+									console.log("Schedule New?:", notifEnabled);
+									if (notifEnabled) {
+										createTaskNotification(newTaskObj);
+									}
+								})
+								.catch((err) => {
+									console.log("There was an error cancelling the notification:");
+									console.log(err);
+								});
 
 							saveTaskData();
 							console.log("Modifications applied to task.");
@@ -700,16 +844,42 @@ const styles = StyleSheet.create({
 
 
 
+	searchBar: {
+		width: "85%",
+		marginTop: 60,
+
+		backgroundColor: "#16171a",
+		borderRadius: 18,
+		//elevation: 0,
+
+		padding: 10,
+		height: 50,
+	},
+
+	searchIcon: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+
+	searchInput: {
+		flex: 8,
+		color: "#f2f6ff",
+		textAlign: "left",
+		fontFamily: "Inter-Medium",
+		fontSize: 18,
+	},
+
 	listBox: {
 		width: "85%",
-		marginTop: 65,
+		marginTop: 15,
 	},
 
 	listFooter: {
 		backgroundColor: "#7c7f8e",
 		height: 2,
 
-		marginTop: 15,
+		marginBottom: 15,
 		borderRadius: 2,
 	},
 

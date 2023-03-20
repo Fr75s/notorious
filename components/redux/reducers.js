@@ -1,6 +1,10 @@
 import { combineReducers } from "redux";
 
-import { CHANGE_SETTING, SET_SETTINGS } from "./SettingActions";
+import { 
+	CHANGE_SETTING, 
+	SET_SETTINGS,
+	RESET_SETTINGS
+} from "./SettingActions";
 import {
 	RESET_TASKS,
 	SET_TASK_DATA,
@@ -10,11 +14,27 @@ import {
 	MODIFY_TASK,
 	CHANGE_TASK_SECTION
 } from "./TaskActions";
-import { taskIndexFromID } from "./helpers";
+import {
+	RESET_NOTES,
+	SET_NOTES,
+	ADD_NOTE,
+	MODIFY_NOTE,
+	SHIFT_NOTE,
+	MOVE_NOTE,
+	REMOVE_NOTE,
+	CHANGE_NOTEBOOK,
+	CREATE_NOTEBOOK,
+	REMOVE_NOTEBOOK
+} from "./NoteActions";
+import { 
+	taskIndexFromID,
+	noteIndexFromID,
+} from "./helpers";
 
 const initialSettingsState = {
 	"usePartialCompletions": false,
 	"clearOldFinished": true,
+	"strictFiltering": false,
 	"oldTaskThreshold": 7,
 }
 
@@ -39,12 +59,26 @@ const initialTasksState = [
 	}
 ]
 
+const initialNotesState = {
+	standard: [
+		
+	],
+	archived: [
+		
+	],
+	deleted: [
+
+	]
+}
+
 const settingReducer = (state = initialSettingsState, action) => {
 	switch (action.type) {
 		case CHANGE_SETTING: {
 			const { key, value } = action.payload
+			
 			let merge = {}
 			merge[key] = value;
+
 			return {
 				...state,
 				...merge,
@@ -54,6 +88,11 @@ const settingReducer = (state = initialSettingsState, action) => {
 			const { settings } = action.payload
 			return {
 				...settings
+			}
+		}
+		case RESET_SETTINGS: {
+			return {
+				...initialSettingsState
 			}
 		}
 		default:
@@ -77,10 +116,10 @@ const taskReducer = (state = initialTasksState, action) => {
 		}
 		case ADD_TASK: {
 			const { task } = action.payload;
-			const creationDate = (new Date()).toString();
 
-			task.creationDate = creationDate;
-			task.completionDate = null;
+			//const creationDate = (new Date()).toString();
+			//task.creationDate = creationDate;
+			//task.completionDate = null;
 
 			//if (task.notify) { }
 			
@@ -167,6 +206,112 @@ const taskReducer = (state = initialTasksState, action) => {
 	}
 }
 
-mainReducer = combineReducers({ settings: settingReducer, tasks: taskReducer });
+const noteReducer = (state = initialNotesState, action) => {
+	switch (action.type) {
+		case RESET_NOTES: {
+			return {
+				...initialNotesState
+			};
+		}
+		case SET_NOTES: {
+			const { data } = action.payload;
+			return {
+				...data
+			};
+		}
+		case ADD_NOTE: {
+			const { note } = action.payload;
+			
+			let newNotes = state;
+			newNotes["standard"].unshift(note);
+
+			return { ...newNotes };
+		}
+		case MODIFY_NOTE: {
+			const { id, notebook, newNote } = action.payload;
+			const noteIndex = noteIndexFromID(state, notebook, id);
+
+			let newNotes = state;
+			newNotes[notebook][noteIndex] = newNote;
+			
+			return { ...newNotes };
+		}
+		case MOVE_NOTE: {
+			const { id, notebook, index } = action.payload;
+			const noteIndex = noteIndexFromID(state, notebook, id);
+			const note = state[notebook][noteIndex];
+
+			let newNotes = state;
+			newNotes[notebook].splice(noteIndex, 1);
+			newNotes[notebook].splice(index, 0, note);
+
+			return { ...newNotes };
+		}
+		case SHIFT_NOTE: {
+			const { id, notebook, up } = action.payload;
+			const noteIndex = noteIndexFromID(state, notebook, id);
+			const note = state[notebook][noteIndex];
+			
+			let newNotes = state;
+			
+			if (up && noteIndex > 0) {
+				newNotes[notebook].splice(noteIndex, 1);
+				newNotes[notebook].splice(noteIndex - 1, 0, note);
+			}
+			if (!up && noteIndex < newNotes[notebook].length - 1) {
+				newNotes[notebook].splice(noteIndex, 1);
+				newNotes[notebook].splice(noteIndex + 1, 0, note);
+			}
+
+			return { ...newNotes };
+		}
+		case REMOVE_NOTE: {
+			const { id, notebook } = action.payload;
+			const noteIndex = noteIndexFromID(state, notebook, id);
+		
+			let newNotes = state;
+			newNotes[notebook].splice(noteIndex, 1);
+
+			return { ...newNotes };
+		}
+		case CREATE_NOTEBOOK: {
+			const { name } = action.payload;
+
+			let newNotes = state;
+			newNotes[name] = [];
+
+			return { ...newNotes };
+		}
+		case REMOVE_NOTEBOOK: {
+			const { name } = action.payload;
+
+			let newNotes = state;
+			newNotes[name] = null;
+
+			return { ...newNotes };
+		}
+		case CHANGE_NOTEBOOK: {
+			const { id, notebook, newNotebook } = action.payload;
+			const noteIndex = noteIndexFromID(state, notebook, id);
+			const note = state[notebook][noteIndex];
+			
+			let newNotes = state;
+			
+			if (newNotes[newNotebook]) {
+				newNotes[notebook].splice(noteIndex, 1);
+				newNotes[newNotebook].unshift(note);
+			}
+
+			return { ...newNotes };
+		}
+		default: return state;
+	}
+}
+
+mainReducer = combineReducers({ 
+	settings: settingReducer, 
+	tasks: taskReducer,
+	notes: noteReducer
+});
 
 export default mainReducer;

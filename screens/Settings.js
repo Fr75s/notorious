@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Switch, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useIsFocused } from "@react-navigation/native";
 
 import { useSelector } from "react-redux";
 import store from "../components/redux/store"
-import { setSettings } from "../components/redux/SettingActions";
+import { changeSetting, resetSettings, setSettings } from "../components/redux/SettingActions";
 
 import { globalStyles } from "./../components/GlobalStyles.js";
 import FAB from "./../components/FAB.js"
@@ -27,6 +27,42 @@ async function SaveSettings(settingsObj) {
 	}
 }
 
+
+// Components
+
+// Switch
+function SettingSwitch({ label, setting }) {
+	return (
+		<View style={[globalStyles.row, { width: "85%" }]}>
+			<Text style={[globalStyles.h3, styles.settingLabel]}>
+				{label}
+			</Text>
+			<Switch 
+				style={styles.settingSwitch}
+				trackColor={{ false: "#16171a", true: "#74aaff" }}
+				thumbColor={"#f2f6ff"}
+				onValueChange={() => {
+					settings[setting] = !settings[setting];
+					SaveSettings(settings);
+				}}
+				value={settings[setting]}
+			/>
+		</View>
+	)
+}
+
+function SettingAction({ label, onPress, danger }) {
+	return (
+		<Pressable
+			style={styles.settingButton}
+			onPress={onPress}
+		>
+			<Text style={[globalStyles.h3, { color: danger ? "#f7597b" : "#bdc0c7" }]}>{label}</Text>
+		</Pressable>
+	)
+}
+
+// Screen
 export default function SettingsScreen({ navigation }) {
 	
 	settings = useSelector(state => state.settings);
@@ -49,39 +85,20 @@ export default function SettingsScreen({ navigation }) {
 			
 				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Tasks</Text>
 
-				<View style={[globalStyles.row, { width: "85%" }]}>
-					<Text style={[globalStyles.h3, styles.settingLabel]}>
-						Use Partial Task Completions
-					</Text>
-					<Switch 
-						style={styles.settingSwitch}
-						trackColor={{ false: "#16171a", true: "#74aaff" }}
-						thumbColor={"#f2f6ff"}
-						onValueChange={() => {
-							settings.usePartialCompletions = !settings.usePartialCompletions;
-							setLocalSettings(JSON.parse(JSON.stringify(settings)));
-							SaveSettings(settings);
-						}}
-						value={localSettings.usePartialCompletions}
-					/>
-				</View>
+				<SettingSwitch 
+					label={"Use Partial Task Completions"}
+					setting={"usePartialCompletions"}
+				/>
 
-				<View style={[globalStyles.row, { width: "85%" }]}>
-					<Text style={[globalStyles.h3, styles.settingLabel]}>
-						Clear Old Finished Tasks
-					</Text>
-					<Switch 
-						style={styles.settingSwitch}
-						trackColor={{ false: "#16171a", true: "#74aaff" }}
-						thumbColor={"#f2f6ff"}
-						onValueChange={() => {
-							settings.clearOldFinished = !settings.clearOldFinished;
-							setLocalSettings(JSON.parse(JSON.stringify(settings)));
-							SaveSettings(settings);
-						}}
-						value={localSettings.clearOldFinished}
-					/>
-				</View>
+				<SettingSwitch 
+					label={"Clear Old Finished Tasks"}
+					setting={"clearOldFinished"}
+				/>
+
+				<SettingSwitch 
+					label={"Strict Search Filtering"}
+					setting={"strictFiltering"}
+				/>
 
 				<View style={[globalStyles.row, { width: "85%", marginTop: 15 }]}>
 					<Text style={[globalStyles.h3, styles.settingLabel]}>
@@ -110,14 +127,34 @@ export default function SettingsScreen({ navigation }) {
 
 				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Actions</Text>
 
-				<Pressable
-					style={styles.settingButton}
+				<SettingAction 
+					label={"Export Data"}
 					onPress={() => {
-						console.log("Test");
+						console.log("ACTION GOES HERE");
 					}}
-				>
-					<Text style={globalStyles.h3}>Setting Action</Text>
-				</Pressable>
+				/>
+
+				<SettingAction 
+					label={"Reset Settings"}
+					danger={true}
+					onPress={() => {
+						Alert.alert("Are you sure?", "This will reset your settings to the default settings.", [
+							{
+								text: "Cancel",
+							},
+							{
+								text: "OK",
+								onPress: () => {
+									store.dispatch(resetSettings());
+									setLocalSettings(JSON.parse(JSON.stringify(settings)));
+									SaveSettings(settings);
+								}
+							}
+						], {
+							cancelable: true,
+						});
+					}}
+				/>
 				
 			</ScrollView>
 
@@ -129,18 +166,18 @@ export default function SettingsScreen({ navigation }) {
 					//AsyncStorage.removeItem("@settings");
 				}}
 			/>
-			
-			*/}
-
 			<FAB
 				icon={"close"}
 				onPress={() => {
 					AsyncStorage.removeItem("@settings");
 				}}
 			/>
+			*/}
+
+			
 
 			<Text style={styles.versionInfo}>
-				Notorious v0.1.0
+				Notorious v0.1.1
 			</Text>
 		</View>
 	)
@@ -168,6 +205,7 @@ const styles = StyleSheet.create({
 
 		padding: 10,
 		borderRadius: 10,
+		marginBottom: 10,
 
 		elevation: 2,
 	},
@@ -185,11 +223,9 @@ const styles = StyleSheet.create({
 
 	
 	versionInfo: {
+		...globalStyles.smallText,
+		
 		position: "absolute",
-		fontFamily: "Inter-Medium",
-		fontSize: 12,
-		color: "#7c7f8e",
-
 		right: 10,
 		bottom: 10,
 	}

@@ -8,3 +8,12 @@ export function taskIndexFromID(taskData, taskSectionIndex, taskID) {
 		}
 	}
 }
+
+export function noteIndexFromID(noteData, notebook, noteID) {
+	for (let i = 0; i < noteData[notebook].length; i++) {
+		//console.log("CHECKING", taskData[taskSectionIndex].data[i].id, "VS", taskID);
+		if (noteData[notebook][i].id === noteID) {
+			return i;
+		}
+	}
+}

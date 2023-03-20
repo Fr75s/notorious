@@ -41,52 +41,60 @@ export default function TaskView({ taskData, completionState, usePartialCompleti
 	
 	return (
 		<View style={styles.back}>
-			<Pressable
-				style={styles.info}
-				onPress={() => infoAction()}
-				delayLongPress={300}
-				onLongPress={() => longInfoAction()}
-			>
-				<Text 
-					style={styles.title}
-					numberOfLines={1}
-				>{taskData.name}</Text>
-				<Text 
-					style={styles.desc}
-					numberOfLines={1}
-				>{taskData.desc}</Text>
-			</Pressable>
-			<View style={styles.actions}>
+			{taskData.notify ? <MaterialCommunityIcons 
+				style={styles.repeatIndicator}
+				name={taskData.repeatInterval ? "alarm" : "bell"} 
+				size={20} 
+				color={"#7c7f8e"}
+			/> : null}
+			<View style={styles.flexZone}>
 				<Pressable
-					style={styles.actionButton}
-					onPress={() => {
-						if (rearrangeMode)
-							upperRearrangeAction()
-						else
-							clearAction()
-					}}
-				>
-					<MaterialCommunityIcons name={upperIcon} size={iconSize} color={"#7c7f8e"} />
-				</Pressable>
-				{/*
-				<Pressable
-					style={styles.actionButton}
+					style={styles.info}
 					onPress={() => infoAction()}
+					delayLongPress={300}
+					onLongPress={() => longInfoAction()}
 				>
-					<MaterialCommunityIcons name="pencil" size={iconSize} color={"#7c7f8e"}/>
+					<Text 
+						style={styles.title}
+						numberOfLines={1}
+					>{taskData.name}</Text>
+					<Text 
+						style={styles.desc}
+						numberOfLines={1}
+					>{taskData.desc}</Text>
 				</Pressable>
-				*/}
-				<Pressable
-					style={styles.actionButton}
-					onPress={() => {
-						if (rearrangeMode)
-							lowerRearrangeAction()
-						else
-							checkAction()
-					}}
-				>
-					<MaterialCommunityIcons name={lowerIcon} size={iconSize} color={checkColor}/>
-				</Pressable>
+				<View style={styles.actions}>
+					<Pressable
+						style={styles.actionButton}
+						onPress={() => {
+							if (rearrangeMode)
+								upperRearrangeAction()
+							else
+								clearAction()
+						}}
+					>
+						<MaterialCommunityIcons name={upperIcon} size={iconSize} color={"#7c7f8e"} />
+					</Pressable>
+					{/*
+					<Pressable
+						style={styles.actionButton}
+						onPress={() => infoAction()}
+					>
+						<MaterialCommunityIcons name="pencil" size={iconSize} color={"#7c7f8e"}/>
+					</Pressable>
+					*/}
+					<Pressable
+						style={styles.actionButton}
+						onPress={() => {
+							if (rearrangeMode)
+								lowerRearrangeAction()
+							else
+								checkAction()
+						}}
+					>
+						<MaterialCommunityIcons name={lowerIcon} size={iconSize} color={checkColor}/>
+					</Pressable>
+				</View>
 			</View>
 		</View>
 	)
@@ -94,22 +102,36 @@ export default function TaskView({ taskData, completionState, usePartialCompleti
 
 const styles = StyleSheet.create({
 	back: {
-		flex: 1,
-		flexDirection: "row",
-		alignItems: "center",
+		//flex: 1,
+		//flexDirection: "row",
+		//alignItems: "center",
 
 		height: 125,
 		backgroundColor: "#16171a",
 		borderRadius: 18,
 
-		marginTop: 15,
+		marginBottom: 15,
 		padding: 15,
 
 		elevation: 1,
 	},
 
+	flexZone: {
+		flex: 1,
+		flexDirection: "row",
+		alignItems: "center",
+	},
+
+
+
 	info: {
 		flex: 7,
+	},
+
+	repeatIndicator: {
+		position: "absolute",
+		left: 12,
+		top: 10,
 	},
 
 	actions: {

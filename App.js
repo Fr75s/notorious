@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Alert, Easing, Platform, StyleSheet } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
@@ -17,11 +17,11 @@ import { MenuProvider } from "react-native-popup-menu";
 import store from "./components/redux/store";
 import { setSettings } from "./components/redux/SettingActions";
 import { setTaskData } from "./components/redux/TaskActions";
+import { setNotes } from "./components/redux/NoteActions";
 import { Provider } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import TasksScreen from "./screens/Tasks.js";
-import RecurScreen from "./screens/Recur.js";
 import NotesScreen from "./screens/Notes.js";
 import CalendarScreen from "./screens/Calendar.js";
 import SettingsScreen from "./screens/Settings.js";
@@ -51,6 +51,27 @@ Notifications.setNotificationCategoryAsync(
 // Bottom Tab Navigator
 const Tab = createBottomTabNavigator();
 
+// Modal Stack
+/*
+const modalStack = createModalStack({
+	Alert: AlertModal,
+	AlertModal,
+}, {
+	animateInConfig: {
+		easing: Easing.inOut(Easing.linear),
+		duration: 0,
+	},
+	animateOutConfig: {
+		easing: Easing.inOut(Easing.linear),
+		duration: 0,
+	},
+
+	backdropOpacity: 0.3,
+	backdropColor: "#000000",
+	backBehavior: "clear",
+});
+*/
+
 // Tab State
 export default function App() {
 	const [expoPushToken, setExpoPushToken] = useState("");
@@ -75,6 +96,8 @@ export default function App() {
 					"Inter-Light": require("./assets/fonts/Inter/Inter-Light.ttf"),
 					"Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.ttf"),
 					"Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.ttf"),
+
+					"Meslo-Regular": require("./assets/fonts/Meslo/Meslo-Regular.ttf"),
 				});
 
 				// Load Settings
@@ -88,6 +111,12 @@ export default function App() {
 				if (loadedTasks) {
 					console.log("Preloaded Tasks:", loadedTasks);
 					store.dispatch(setTaskData(JSON.parse(loadedTasks)));
+				}
+
+				const loadedNotes = await AsyncStorage.getItem("@notes");
+				if (loadedNotes) {
+					console.log("Preloaded Notes:", loadedNotes);
+					store.dispatch(setNotes(JSON.parse(loadedNotes)));
 				}
 
 				// Return fonts
@@ -108,9 +137,7 @@ export default function App() {
 	}
 
 	return (
-		<Provider
-			store={store}
-		>
+		<Provider store={store}>
 			<MenuProvider>
 				<NavigationContainer>
 					<Tab.Navigator 
@@ -123,15 +150,6 @@ export default function App() {
 							options = {{
 								tabBarIcon: ({ color, size }) => (
 									<MaterialCommunityIcons name="check" color={color} size={size} />
-								)
-							}}
-						/>
-						<Tab.Screen 
-							name="Reocurring Tasks" 
-							component={RecurScreen} 
-							options = {{
-								tabBarIcon: ({ color, size }) => (
-									<MaterialCommunityIcons name="alarm-check" color={color} size={size} />
 								)
 							}}
 						/>
