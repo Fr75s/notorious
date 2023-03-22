@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { View, Text, Image, FlatList, TextInput, Pressable, ScrollView, StyleSheet } from "react-native";
+import { View, Text, Alert, Image, FlatList, TextInput, Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { createStackNavigator } from "@react-navigation/stack";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import "react-native-gesture-handler";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { useSelector } from "react-redux";
@@ -11,10 +14,12 @@ import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-m
 
 import store from "../components/redux/store";
 import * as noteActions from "../components/redux/NoteActions";
+import Dialog from "../components/Dialog";
 import FAB from "./../components/FAB.js";
 import NoteView from "../components/NoteView";
+import NotebookView from "../components/NotebookView";
 
-import { globalStyles, globalMenuStyles, globalMDStyles } from "./../components/GlobalStyles.js";
+import { globalStyles, globalMenuStyles, globalMDStyles, globalMenuDestructiveText } from "./../components/GlobalStyles.js";
 
 // Settings
 
@@ -48,6 +53,8 @@ Other objects may be present as "notebooks" with the same features as Standard.
 
 let notes = {}
 
+const defaultNotebookSet = ["Standard", "Archived", "Deleted"]
+
 
 
 // Note Helper Functions
@@ -77,13 +84,16 @@ function getAllTags(thisNotebook) {
 	return tagList;
 }
 
-function getAllTasks() {
+function getAllTasks(onlyIDs = false) {
 	let allTasks = store.getState().tasks;
 	let tasks = [];
 
 	for (let i = 0; i < allTasks.length; i++) {
 		for (let j = 0; j < allTasks[i].data.length; j++) {
-			tasks.push(allTasks[i].data[j]);
+			if (onlyIDs)
+				tasks.push(allTasks[i].data[j].id);
+			else
+				tasks.push(allTasks[i].data[j]);
 		}
 	}
 
@@ -106,39 +116,225 @@ async function saveNotes() {
 
 
 
-function NoteListScreen({ navigation }) {
+const Drawer = createDrawerNavigator();
+
+function NoteListNav({ navigation }) {
+	// Check when drawer switches sides and close it
+	return (
+		<Drawer.Navigator
+			screenOptions={{ 
+				headerShown: false,
+				drawerPosition: (settings.notesDrawerOnLeft ? "left" : "right")
+			}}
+			drawerContent={(props) => <NoteListDrawer {...props} />}
+		>
+			<Stack.Screen name="NoteList" component={NoteListScreen} />
+		</Drawer.Navigator>
+	)
+}
+
+function NoteListDrawer(props) {
+	let notebooks = Object.keys(notes);
+
+	const [createNotebookDialog, setCreateNotebookDialog] = useState(false);
+
+	return (
+		<View style={globalStyles.screen}>
+			<Text style={globalStyles.h2}>Notebooks</Text>
+
+			<Dialog 
+				type={"textInput"}
+				title={"Create New Notebook"}
+				details={""}
+				inputPlaceholder={"New Name"}
+				visible={createNotebookDialog}
+
+				action1={(value) => {
+					console.log(value);
+
+					let validName = true;
+					for (let i = 0; i < defaultNotebookSet.length; i++) {
+						if (defaultNotebookSet[i].toLowerCase() === value.toLowerCase())
+							validName = false;
+					}
+					
+					if (validName) {
+						store.dispatch(noteActions.createNotebook(value));
+						store.dispatch(noteActions.changeSelectedNotebook(value));
+						saveNotes();
+						console.log("Successfully Created Notebook");
+						props.navigation.closeDrawer();
+					}
+
+				}}
+				action2={() => {}}
+				dismissAction={() => {
+					setCreateNotebookDialog(false);
+				}}
+			/>
+
+			<FlatList 
+				style={styles.searchItemsBox}
+				data={notebooks}
+				renderItem={({item}) => 
+					<NotebookView 
+						notebook={item}
+						pressAction={() => {
+							store.dispatch(noteActions.changeSelectedNotebook(item));
+							props.navigation.closeDrawer();
+						}}
+						deleteAction={() => {
+							store.dispatch(noteActions.removeNotebook(item));
+							store.dispatch(noteActions.changeSelectedNotebook("Standard"));
+							saveNotes();
+							props.navigation.closeDrawer();
+							console.log(notes);
+						}}
+					/>
+				}
+				ListFooterComponent={
+					<View
+						style={{
+							flex: 1,
+							alignItems: "center",
+						}}
+					>
+						<Pressable
+							style={styles.notebookListAdd}
+							// TEXT PROMPT
+							onPress={() => {
+								setCreateNotebookDialog(true);
+							}}
+						>
+							<MaterialCommunityIcons 
+								name={"plus"} 
+								size={25} 
+								color={"#f2f6ff"} 
+							/>
+						</Pressable>
+					</View>
+				}
+			/>
+		</View>
+	)
+}
+
+function NoteListScreen({ route, navigation }) {
 	notes = useSelector((state) => {
-		console.log(state.notes);
+		//console.log(state);
 		return state.notes;
 	});
 
-	const [notebook, setNotebook] = useState("standard");
+	notebook = useSelector((state) => state.selectedNotebook);
+
+	const [renameNotebookDialog, setRenameNotebookDialog] = useState(false);
+
+	//const [notebook, setNotebook] = useState("Standard");
 	const emptyNotebook = () => {
+		if (!notes[notebook])
+			return true;
 		return notes[notebook].length === 0;
 	}
 
 	return (
 		<View style={globalStyles.screen}>
-			<Text style={styles.text}>Notes Screen</Text>
+			<View style={[globalStyles.row, { flex: 0, width: "85%" }]}>
+				<Text style={[globalStyles.h2, { flex: 5, marginTop: 0}]}>{notebook === "Standard" ? "Notes" : notebook}</Text>
+				<Pressable
+					style={{ flex: 1, alignItems: "flex-end" }}
+					onPress={() => {
+						console.log("Search Notes");
+					}}
+				>
+					<MaterialCommunityIcons 
+						name={"magnify"} 
+						size={25} 
+						color={"#f2f6ff"} 
+					/>
+				</Pressable>
+				<Dialog 
+					type={"textInput"}
+					title={"Rename Notebook"}
+					details={""}
+					inputPlaceholder={"New Name"}
+					visible={renameNotebookDialog}
 
-			{/*
-			<Markdown
-				value={`# Hello World \n ## Subtitle \n\n Some Content`}
-				styles={{
-					container: {
-						width: "85%",
-						backgroundColor: "#00000000"
-					}
-				}}
-			/>
-			*/}
+					action1={(value) => {
+						console.log(value);
+
+						let validName = true;
+						for (let i = 0; i < defaultNotebookSet.length; i++) {
+							if (defaultNotebookSet[i].toLowerCase() === value.toLowerCase())
+								validName = false;
+						}
+						
+						if (validName) {
+							for (let i = 0; i < notes[notebook].length; i++) {
+								store.dispatch(noteActions.changeNotebook(notes[notebook][i].id, notebook, value));
+							}
+							const oldNotebook = notebook;
+							store.dispatch(noteActions.changeSelectedNotebook(value));
+							store.dispatch(noteActions.removeNotebook(oldNotebook));
+							saveNotes();
+							console.log("Successfully Moved Notes.");
+						}
+
+					}}
+					action2={() => {}}
+					dismissAction={() => {
+						setRenameNotebookDialog(false);
+					}}
+				/>
+				<Menu style={{ flex: 1, alignItems: "flex-end" }}>
+					<MenuTrigger>
+						<MaterialCommunityIcons name={"menu"} size={30} color={"#f2f6ff"} />
+					</MenuTrigger>
+					<MenuOptions customStyles={globalMenuStyles}>
+						{ !defaultNotebookSet.includes(notebook) ? <MenuOption 
+							text={"Rename Notebook"}
+							onSelect={() => {
+								// console.log("H");
+								// TEXT PROMPT
+								setRenameNotebookDialog(true);
+							}}
+						/> : null}
+						<MenuOption 
+							text={"Reset All Notebooks"}
+							customStyles={globalMenuDestructiveText}
+							onSelect={() => {
+								Alert.alert("Are you sure?", "This is a destructive action, IT WILL DELETE EVERYTHING!", [
+									{
+										text: "Cancel",
+									},
+									{
+										text: "OK",
+										onPress: () => {
+											console.log("Clearing Notes...");
+											
+											AsyncStorage.removeItem("@notes");
+											store.dispatch(noteActions.resetNotes());
+											saveNotes();
+	
+											console.log("Cleared.");
+										}
+									}
+								], {
+									cancelable: true,
+								});
+							}}
+						/>
+					</MenuOptions>
+				</Menu>
+			</View>
 
 			<FlatList 
 				style={styles.searchItemsBox}
 				data={notes[notebook]}
+				notebook={notebook}
 				renderItem={({item}) => 
 					<NoteView
 						data={item}
+						notebook={notebook}
 						openAction={() => {
 							navigation.navigate("ViewNote", {
 								mode: "modify",
@@ -149,6 +345,56 @@ function NoteListScreen({ navigation }) {
 						longOpenAction={() => {
 							console.log(notes[notebook]);
 						}}
+						moveAction={() => {
+							console.log("Opening Task Select");
+							navigation.navigate("SelectItems", {
+								mode: "notebooks",
+								already: [notebook],
+								newItems: true,
+								multi: false,
+								backAction: (selectedNotebook) => {
+									//console.log("NOTEBOOK:", selectedNotebook);
+									store.dispatch(noteActions.changeNotebook(item.id, notebook, selectedNotebook));
+									saveNotes();
+									console.log("Note Successfully Moved.");
+								}
+							});//
+						}}
+						archiveAction={() => {
+							if (notebook === "Archived") {
+								store.dispatch(noteActions.changeNotebook(item.id, notebook, "Standard"));
+							} else {
+								store.dispatch(noteActions.changeNotebook(item.id, notebook, "Archived"));
+							}
+							saveNotes();
+							console.log("Item successfully (un)archived.");
+						}}
+						deleteAction={() => {
+							if (notebook === "Deleted") {
+								store.dispatch(noteActions.changeNotebook(item.id, notebook, "Standard"));
+							} else {
+								store.dispatch(noteActions.changeNotebook(item.id, notebook, "Deleted"));
+							}
+							saveNotes();
+							console.log("Item successfully moved to deleted.");
+						}}
+						permaDeleteAction={() => {
+							Alert.alert("Delete This Note?", "You will not be able to restore this note after deletion.", [
+								{
+									text: "Cancel",
+								},
+								{
+									text: "OK",
+									onPress: () => {
+										store.dispatch(noteActions.removeNote(item.id, notebook));	
+										saveNotes();
+										console.log("Note successfully deleted.");
+									}
+								}
+							], {
+								cancelable: true,
+							});
+						}}
 					/>
 				}
 			/>
@@ -157,7 +403,7 @@ function NoteListScreen({ navigation }) {
 			{ emptyNotebook() ? <Image style={styles.placeholderImage} source={require("../assets/images/nothingtodo.png")} /> : null }
 			{ emptyNotebook() ? <Text style={styles.placeholderLabel} >Nothing of note...</Text> : null }
 
-			{ notebook !== "archived" && notebook !== "deleted" ? <FAB 
+			{ notebook !== "Archived" && notebook !== "Deleted" ? <FAB 
 				icon={"plus"}
 				onPress={() => {
 					navigation.navigate("ViewNote", {
@@ -165,10 +411,28 @@ function NoteListScreen({ navigation }) {
 					});
 				}}
 			/> : null}
-			{ notebook === "deleted" ? <FAB 
-				icon={"close"}
+			{ notebook === "Deleted" && notes["Deleted"].length > 0 ? <FAB 
+				icon={"delete"}
 				onPress={() => {
-					console.log("Alert and clear deleted notes");
+					if (notes["Deleted"].length > 0) {
+						Alert.alert("Clear All Deleted Notes?", "You will not be able to restore any deleted notes after deletion.", [
+							{
+								text: "Cancel",
+							},
+							{
+								text: "OK",
+								onPress: () => {
+									for (let i = notes["Deleted"].length - 1; i >= 0; i--) {
+										store.dispatch(noteActions.removeNote(notes["Deleted"][i].id, "Deleted"));	
+									}
+									saveNotes();
+									console.log("Cleared all deleted notes");
+								}
+							}
+						], {
+							cancelable: true,
+						});
+					}
 				}}
 			/> : null}
 		</View>
@@ -198,8 +462,10 @@ function ViewNoteScreen({ route, navigation }) {
 	// You may need to move this snippet somewhere else
 	let actualTasks = []
 	if (noteMode !== "new") {
-		const allTasks = getAllTasks();
-		for (let i = 0; i < passedNote.attachedTasks; i++) {
+		const allTasks = getAllTasks(true);
+		console.log("ALL TASKS", allTasks);
+		for (let i = 0; i < passedNote.attachedTasks.length; i++) {
+			console.log("PASSED:", passedNote.attachedTasks[i]);
 			if (allTasks.includes(passedNote.attachedTasks[i])) {
 				actualTasks.push(passedNote.attachedTasks[i]);
 			}
@@ -408,13 +674,14 @@ function SearchNoteScreen({ route, navigation }) {
 function SelectListedItemsScreen({ route, navigation }) {
 	let initial = []
 
-	const prepareSelectableList = (rawList, rawListReal) => {
+	const prepareSelectableList = (rawList, rawListReal, dndList) => {
 		let selectableList = []
 		for (let i = 0; i < rawList.length; i++) {
 			//console.log(!rawListReal[i]);
 			selectableList[i] = {
 				label: rawList[i],
 				real: (rawListReal ? rawListReal[i] : null),
+				dnd: (dndList ? dndList[i] : null),
 				selected: (rawListReal ? route.params.already.includes(rawListReal[i]) : route.params.already.includes(rawList[i]))
 			}
 		}
@@ -453,8 +720,20 @@ function SelectListedItemsScreen({ route, navigation }) {
 			initial = prepareSelectableList(taskNames, taskIDs);
 			break;
 		}
+		case "notebooks": {
+			let notebooks = Object.keys(notes);
+			notebooks.splice(notebooks.indexOf("Deleted"), 1);
+			notebooks.splice(notebooks.indexOf("Archived"), 1);
+
+			let dndNotebooks = new Array(notebooks.length);
+			dndNotebooks[notebooks.indexOf("Standard")] = true;
+
+			initial = prepareSelectableList(notebooks, null, dndNotebooks);
+			console.log(initial);
+			break;
+		}
 		default: {
-			//setItems([]);
+			break;
 		}
 	}
 	
@@ -550,54 +829,48 @@ function SelectListedItemsScreen({ route, navigation }) {
 					</View> : null
 				}
 				renderItem={({item, index}) => 
-					<Menu style={{flex: 1}}>
-						<MenuTrigger 
-							style={globalStyles.row}
-							triggerOnLongPress={true}
-
-							onAlternativeAction={() => {
-								let newItems = items;
-								
-								if (!multiSelect) {
-									for (let i = 0; i < newItems.length; i++) {
-										if (newItems[i].selected)
-											newItems[i].selected = false;
-									}
+					<Pressable
+						style={[globalStyles.row, { flex: 1 }]}
+						android_ripple={{
+							color: "#16171a"
+						}}
+						onPress={() => {
+							let newItems = items;
+							
+							if (!multiSelect) {
+								for (let i = 0; i < newItems.length; i++) {
+									if (newItems[i].selected)
+										newItems[i].selected = false;
 								}
+							}
 
-								newItems[index].selected = !newItems[index].selected;
-								
-								setItems(newItems);
-								setRefreshList(!refreshList);
+							newItems[index].selected = !newItems[index].selected;
+							
+							setItems(newItems);
+							setRefreshList(!refreshList);
+						}}
+					>
+						<Text style={[globalStyles.h2, {
+							flex: 5, 
+							marginTop: 0,
+							padding: 15,
+						}]}>
+							{item.label}
+						</Text>
+						<MaterialCommunityIcons 
+							style={{
+								padding: 0,
+								alignItems: "center",
+								flex: 1,
 							}}
-						>
-							<Text style={[globalStyles.h2, {
-								flex: 5, 
-								marginTop: 0,
-								padding: 15,
-							}]}>
-								{item.label}
-							</Text>
-							<MaterialCommunityIcons 
-								style={{
-									padding: 0,
-									alignItems: "center",
-									flex: 1,
-								}}
-								name={item.selected ? "checkbox-marked-outline" : "checkbox-blank-outline"} 
-								size={25} 
-								color={"#f2f6ff"} 
-							/>
-						</MenuTrigger>
-						<MenuOptions customStyles={globalMenuStyles}>
-							{ newItems ? <MenuOption 
-								text={"Delete"}
-								onSelect={() => {
-									removeItem(index);
-								}}
-							/> : null}
-						</MenuOptions>
-					</Menu>
+							name={multiSelect ? 
+								(item.selected ? "checkbox-marked-outline" : "checkbox-blank-outline")
+								: (item.selected ? "radiobox-marked" : "radiobox-blank")
+							} 
+							size={25} 
+							color={"#f2f6ff"} 
+						/>
+					</Pressable>
 				}
 				extraData={refreshList}
 			/>
@@ -622,7 +895,7 @@ export default function NotesScreen({ navigation }) {
 
 	return (
 		<Stack.Navigator screenOptions={{ headerShown: false }}>
-			<Stack.Screen name="NoteList" component={NoteListScreen} />
+			<Stack.Screen name="NoteNav" component={NoteListNav} />
 			<Stack.Screen name="ViewNote" component={ViewNoteScreen} options={{ presentation: "modal" }} />
 			<Stack.Screen name="SearchNotes" component={SearchNoteScreen} options={{ presentation: "modal" }} />
 			<Stack.Screen name="SelectItems" component={SelectListedItemsScreen} options={{ presentation: "modal" }} />
@@ -709,6 +982,19 @@ const styles = StyleSheet.create({
 	},
 
 
+
+	notebookListAdd: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+
+		width: 100,
+		height: 50,
+
+		borderRadius: 20,
+		backgroundColor: "#16171a",
+		elevation: 3,
+	},
 
 	searchItemsBox: {
 		width: "85%",

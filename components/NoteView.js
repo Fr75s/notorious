@@ -2,11 +2,41 @@ import { View, Text,  Pressable, StyleSheet } from "react-native";
 import Markdown from "react-native-marked";
 
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { globalMenuStyles, globalMDStyles } from "./GlobalStyles";
+import { globalMenuStyles, globalMDStyles, globalStyles, globalMenuDestructiveText } from "./GlobalStyles";
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 
-export default function NoteView({ data, rearrange, openAction, longOpenAction }) {
+export default function NoteView({ data, notebook, openAction, longOpenAction, moveAction, archiveAction, deleteAction, permaDeleteAction }) {
 	const iconSize = 30;
+
+	const prettyTags = () => {
+		if (data.tags && data.tags.length > 0) {
+			let rawTags = data.tags;
+			let prettyFormat = "";
+
+			for (let i = 0; i < rawTags.length - 1; i++) {
+				prettyFormat += "#" + rawTags[i] + ", ";
+			}
+			prettyFormat += "#" + rawTags[rawTags.length - 1];
+
+			return prettyFormat;
+		}
+		return null;
+	}
+
+	const attachedTaskNames = () => {
+		if (data.attachedTasks && data.attachedTasks.length > 0) {
+			let taskNames = "";
+			for (let i = 0; i < data.attachedTasks.length; i++) {
+				let suffix = ", ";
+				if (i === data.attachedTasks[i].length - 1) {
+					suffix = "";
+				}
+				taskNames += data.attachedTasks[i].substring(1, data.attachedTasks[i].indexOf(";")) + suffix;
+			}
+			return taskNames;
+		}
+		return null;
+	}
 	
 	return (
 		<View style={styles.back}>
@@ -36,10 +66,20 @@ export default function NoteView({ data, rearrange, openAction, longOpenAction }
 					>
 						{data.name}
 					</Text>
-					<Markdown 
+					{ prettyTags() ? <Text 
+						style={globalStyles.smallText}
+					>
+						{prettyTags()}
+					</Text> : null }
+					{/* data.attachedTasks.length > 0 ? <View style={[globalStyles.row, {borderWidth: 2}]}>
+						<Text style={[globalStyles.smallText, {flex: 1}]}>
+							HI
+						</Text>
+					</View> : null */}
+					{ notebook !== "Archived" && notebook !== "Deleted" ? <Markdown 
 						value={data.content}
 						styles={globalMDStyles}
-					/>
+					/> : null}
 				</Pressable>
 			</View>
 
@@ -57,13 +97,21 @@ export default function NoteView({ data, rearrange, openAction, longOpenAction }
 				<MenuOptions customStyles={globalMenuStyles}>
 					<MenuOption 
 						text={"Move To Different Notebook"}
+						onSelect={moveAction}
 					/>
 					<MenuOption 
-						text={"Archive Note"}
+						text={notebook === "Archived" ? "Unarchive Note" : "Archive Note"}
+						onSelect={archiveAction}
 					/>
 					<MenuOption 
+						text={notebook === "Deleted" ? "Restore Note" : "Delete Note"}
+						onSelect={deleteAction}
+					/>
+					{ notebook === "Deleted" ? <MenuOption 
 						text={"Delete Note"}
-					/>
+						onSelect={permaDeleteAction}
+						customStyles={globalMenuDestructiveText}
+					/> : null}
 				</MenuOptions>
 			</Menu>
 		</View>

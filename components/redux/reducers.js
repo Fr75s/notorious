@@ -24,7 +24,8 @@ import {
 	REMOVE_NOTE,
 	CHANGE_NOTEBOOK,
 	CREATE_NOTEBOOK,
-	REMOVE_NOTEBOOK
+	REMOVE_NOTEBOOK,
+	CHANGE_SELECTED_NOTEBOOK
 } from "./NoteActions";
 import { 
 	taskIndexFromID,
@@ -36,6 +37,7 @@ const initialSettingsState = {
 	"clearOldFinished": true,
 	"strictFiltering": false,
 	"oldTaskThreshold": 7,
+	"notesDrawerOnLeft": false,
 }
 
 const initialTasksState = [
@@ -60,16 +62,18 @@ const initialTasksState = [
 ]
 
 const initialNotesState = {
-	standard: [
+	"Standard": [
 		
 	],
-	archived: [
+	"Archived": [
 		
 	],
-	deleted: [
+	"Deleted": [
 
 	]
 }
+
+const initialSelectedNotebookState = "Standard";
 
 const settingReducer = (state = initialSettingsState, action) => {
 	switch (action.type) {
@@ -223,7 +227,7 @@ const noteReducer = (state = initialNotesState, action) => {
 			const { note } = action.payload;
 			
 			let newNotes = state;
-			newNotes["standard"].unshift(note);
+			newNotes["Standard"].unshift(note);
 
 			return { ...newNotes };
 		}
@@ -268,9 +272,11 @@ const noteReducer = (state = initialNotesState, action) => {
 		case REMOVE_NOTE: {
 			const { id, notebook } = action.payload;
 			const noteIndex = noteIndexFromID(state, notebook, id);
-		
+			const note = state[notebook][noteIndex];
+			
 			let newNotes = state;
 			newNotes[notebook].splice(noteIndex, 1);
+			//newNotes["Deleted"].unshift(note);
 
 			return { ...newNotes };
 		}
@@ -286,7 +292,7 @@ const noteReducer = (state = initialNotesState, action) => {
 			const { name } = action.payload;
 
 			let newNotes = state;
-			newNotes[name] = null;
+			delete newNotes[name];
 
 			return { ...newNotes };
 		}
@@ -297,12 +303,24 @@ const noteReducer = (state = initialNotesState, action) => {
 			
 			let newNotes = state;
 			
-			if (newNotes[newNotebook]) {
-				newNotes[notebook].splice(noteIndex, 1);
-				newNotes[newNotebook].unshift(note);
+			if (!newNotes[newNotebook]) {
+				newNotes[newNotebook] = [];
 			}
 
+			newNotes[notebook].splice(noteIndex, 1);
+			newNotes[newNotebook].unshift(note);
+
 			return { ...newNotes };
+		}
+		default: return state;
+	}
+}
+
+const selectedNotebookReducer = (state = initialSelectedNotebookState, action) => {
+	switch (action.type) {
+		case CHANGE_SELECTED_NOTEBOOK: {
+			const { name } = action.payload;
+			return name;
 		}
 		default: return state;
 	}
@@ -311,7 +329,8 @@ const noteReducer = (state = initialNotesState, action) => {
 mainReducer = combineReducers({ 
 	settings: settingReducer, 
 	tasks: taskReducer,
-	notes: noteReducer
+	notes: noteReducer,
+	selectedNotebook: selectedNotebookReducer,
 });
 
 export default mainReducer;

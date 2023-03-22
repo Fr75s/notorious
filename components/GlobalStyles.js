@@ -91,6 +91,13 @@ export const globalMenuStyles = {
 	}
 }
 
+export const globalMenuDestructiveText = {
+	optionText: {
+		...globalMenuStyles.optionText,
+		color: "#ff7474"
+	}
+}
+
 export const globalMDStyles = {
 	container: {
 		width: "85%",
@@ -135,6 +142,24 @@ export const globalMDStyles = {
 		fontFamily: "Inter-Medium",
 		fontSize: 16,
 		color: "#bdc0c7",
+	},
+
+	h4: {
+		fontFamily: "Inter-Medium",
+		fontSize: 14,
+		color: "#bdc0c7",
+	},
+
+	h5: {
+		fontFamily: "Inter-Medium",
+		fontSize: 14,
+		color: "#7c7f8e",
+	},
+
+	h6: {
+		fontFamily: "Inter-Medium",
+		fontSize: 12,
+		color: "#7c7f8e",
 	},
 
 	text: {

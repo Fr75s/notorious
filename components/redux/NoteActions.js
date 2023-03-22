@@ -1,3 +1,4 @@
+// For "notes"
 export const RESET_NOTES = "RESET_NOTES";
 export const resetNotes = () => ({
 	type: RESET_NOTES,
@@ -80,6 +81,17 @@ export const createNotebook = (name) => ({
 export const REMOVE_NOTEBOOK = "REMOVE_NOTEBOOK";
 export const removeNotebook = (name) => ({
 	type: REMOVE_NOTEBOOK,
+	payload: {
+		name: name,
+	}
+})
+
+
+
+// For "selectedNote"
+export const CHANGE_SELECTED_NOTEBOOK = "CHANGE_SELECTED_NOTEBOOK";
+export const changeSelectedNotebook = (name) => ({
+	type: CHANGE_SELECTED_NOTEBOOK,
 	payload: {
 		name: name,
 	}

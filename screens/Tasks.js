@@ -22,7 +22,7 @@ import {
 	modifyTask,
 	changeTaskSection,
 } from "../components/redux/TaskActions";
-import { globalMenuStyles, globalStyles } from "./../components/GlobalStyles.js";
+import { globalMenuStyles, globalStyles, globalMenuDestructiveText } from "./../components/GlobalStyles.js";
 import TaskView from "./../components/TaskView.js";
 import FAB from "./../components/FAB.js";
 
@@ -563,6 +563,7 @@ function TasksMain({ navigation }) {
 					/>
 					<MenuOption 
 						text="Delete All Tasks"
+						customStyles={globalMenuDestructiveText}
 						onSelect={() => {
 							Alert.alert("Are you sure?", "This is a destructive action, IT WILL DELETE EVERYTHING!", [
 								{
@@ -586,6 +587,7 @@ function TasksMain({ navigation }) {
 							});
 						}}
 					/>
+					{/*
 					<MenuOption 
 						text={"Log Scheduled"}
 						onSelect={() => {
@@ -599,7 +601,6 @@ function TasksMain({ navigation }) {
 								.catch(() => console.log("Couldn't get them :("));
 						}}
 					/>
-					{/*
 					<MenuOption 
 						text={"Local Filter: " + localTaskFilter}
 					/>

@@ -31,7 +31,7 @@ async function SaveSettings(settingsObj) {
 // Components
 
 // Switch
-function SettingSwitch({ label, setting }) {
+function SettingSwitch({ label, setting, customAction }) {
 	return (
 		<View style={[globalStyles.row, { width: "85%" }]}>
 			<Text style={[globalStyles.h3, styles.settingLabel]}>
@@ -43,6 +43,9 @@ function SettingSwitch({ label, setting }) {
 				thumbColor={"#f2f6ff"}
 				onValueChange={() => {
 					settings[setting] = !settings[setting];
+					if (customAction) {
+						customAction();
+					}
 					SaveSettings(settings);
 				}}
 				value={settings[setting]}
@@ -98,6 +101,13 @@ export default function SettingsScreen({ navigation }) {
 				<SettingSwitch 
 					label={"Strict Search Filtering"}
 					setting={"strictFiltering"}
+				/>
+
+				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Notes</Text>
+
+				<SettingSwitch 
+					label={"Notebook Drawer On Left Side"}
+					setting={"notesDrawerOnLeft"}
 				/>
 
 				<View style={[globalStyles.row, { width: "85%", marginTop: 15 }]}>
