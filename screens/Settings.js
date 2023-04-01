@@ -103,13 +103,6 @@ export default function SettingsScreen({ navigation }) {
 					setting={"strictFiltering"}
 				/>
 
-				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Notes</Text>
-
-				<SettingSwitch 
-					label={"Notebook Drawer On Left Side"}
-					setting={"notesDrawerOnLeft"}
-				/>
-
 				<View style={[globalStyles.row, { width: "85%", marginTop: 15 }]}>
 					<Text style={[globalStyles.h3, styles.settingLabel]}>
 						Old Task Age Clearing Threshold (days)
@@ -134,6 +127,15 @@ export default function SettingsScreen({ navigation }) {
 						keyboardType={"numeric"}
 					/>
 				</View>
+
+				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Notes</Text>
+
+				<SettingSwitch 
+					label={"Notebook Drawer On Left Side"}
+					setting={"notesDrawerOnLeft"}
+				/>
+
+				
 
 				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Actions</Text>
 

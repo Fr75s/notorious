@@ -3,12 +3,10 @@
     "name": "Notorious",
     "slug": "Notorious",
     "version": "0.1.0",
-
     "orientation": "portrait",
     "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "dark",
     "primaryColor": "#74aaff",
-
     "splash": {
       "image": "./assets/icons/splash.png",
       "resizeMode": "contain",
@@ -17,7 +15,6 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-
     "plugins": [
       [
         "expo-notifications",
@@ -27,15 +24,16 @@
         }
       ]
     ],
-
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fr75s.notorious"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/adaptive-icon.png",
         "backgroundColor": "#16171a"
-      }
+      },
+      "package": "com.fr75s.notorious"
     },
     "web": {
       "favicon": "./assets/icons/favicon.png"

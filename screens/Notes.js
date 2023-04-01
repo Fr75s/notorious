@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { View, Text, Alert, Image, FlatList, TextInput, Pressable, ScrollView, StyleSheet } from "react-native";
 
 import { createStackNavigator } from "@react-navigation/stack";
@@ -16,10 +16,12 @@ import store from "../components/redux/store";
 import * as noteActions from "../components/redux/NoteActions";
 import Dialog from "../components/Dialog";
 import FAB from "./../components/FAB.js";
+import Header from "../components/Header";
 import NoteView from "../components/NoteView";
 import NotebookView from "../components/NotebookView";
 
 import { globalStyles, globalMenuStyles, globalMDStyles, globalMenuDestructiveText } from "./../components/GlobalStyles.js";
+import { useFocusEffect } from "@react-navigation/native";
 
 // Settings
 
@@ -100,6 +102,38 @@ function getAllTasks(onlyIDs = false) {
 	return tasks;
 }
 
+function getAllNotes(inputNotes, exclusive = true) {
+	let findNotes = notes;
+	if (inputNotes) {
+		findNotes = inputNotes
+	}
+
+	let allNotes = [];
+
+	for (const notebook in findNotes) {
+		if (exclusive) {
+			if (notebook !== "Archived" && notebook !== "Deleted") {
+				allNotes.push(...findNotes[notebook]);
+			}
+		} else {
+			allNotes.push(...findNotes[notebook]);
+		}
+	}
+
+	return allNotes;
+}
+
+function getNotebookOfNote(note) {
+	for (let notebook in notes) {
+		for (let i = 0; i < notes[notebook].length; i++) {
+			if (notes[notebook][i].id === note.id) {
+				return notebook;
+			}
+		}
+	}
+	return null;
+}
+
 
 
 // Note-Related Functions
@@ -119,6 +153,8 @@ async function saveNotes() {
 const Drawer = createDrawerNavigator();
 
 function NoteListNav({ navigation }) {
+	settings = useSelector(state => state.settings);
+
 	// Check when drawer switches sides and close it
 	return (
 		<Drawer.Navigator
@@ -140,7 +176,7 @@ function NoteListDrawer(props) {
 
 	return (
 		<View style={globalStyles.screen}>
-			<Text style={globalStyles.h2}>Notebooks</Text>
+			<Text style={globalStyles.h1}>Notebooks</Text>
 
 			<Dialog 
 				type={"textInput"}
@@ -236,14 +272,24 @@ function NoteListScreen({ route, navigation }) {
 		return notes[notebook].length === 0;
 	}
 
+	useFocusEffect(
+		useCallback(() => {
+			return () => {
+				navigation.closeDrawer();
+			}
+		})
+	);
+
 	return (
 		<View style={globalStyles.screen}>
 			<View style={[globalStyles.row, { flex: 0, width: "85%" }]}>
 				<Text style={[globalStyles.h2, { flex: 5, marginTop: 0}]}>{notebook === "Standard" ? "Notes" : notebook}</Text>
+				{/*
 				<Pressable
 					style={{ flex: 1, alignItems: "flex-end" }}
 					onPress={() => {
 						console.log("Search Notes");
+
 					}}
 				>
 					<MaterialCommunityIcons 
@@ -252,6 +298,30 @@ function NoteListScreen({ route, navigation }) {
 						color={"#f2f6ff"} 
 					/>
 				</Pressable>
+				*/}
+				<Menu style={{ flex: 1, alignItems: "flex-end" }}>
+					<MenuTrigger>
+						<MaterialCommunityIcons name={"magnify"} size={25} color={"#f2f6ff"} />
+					</MenuTrigger>
+					<MenuOptions customStyles={globalMenuStyles}>
+						<MenuOption 
+							text={"By Name"}
+							onSelect={() => {
+								navigation.navigate("SearchNotes", {
+									mode: "name",
+								});
+							}}
+						/>
+						<MenuOption 
+							text={"By Tag"}
+							onSelect={() => {
+								navigation.navigate("SearchNotes", {
+									mode: "tag",
+								});
+							}}
+						/>
+					</MenuOptions>
+				</Menu>
 				<Dialog 
 					type={"textInput"}
 					title={"Rename Notebook"}
@@ -299,6 +369,12 @@ function NoteListScreen({ route, navigation }) {
 							}}
 						/> : null}
 						<MenuOption 
+							text={"Open Notebook List"}
+							onSelect={() => {
+								navigation.openDrawer();
+							}}
+						/>
+						<MenuOption 
 							text={"Reset All Notebooks"}
 							customStyles={globalMenuDestructiveText}
 							onSelect={() => {
@@ -330,7 +406,6 @@ function NoteListScreen({ route, navigation }) {
 			<FlatList 
 				style={styles.searchItemsBox}
 				data={notes[notebook]}
-				notebook={notebook}
 				renderItem={({item}) => 
 					<NoteView
 						data={item}
@@ -522,24 +597,8 @@ function ViewNoteScreen({ route, navigation }) {
 		<View style={globalStyles.screen}>
 			{/*<Text style={styles.text}>Edit a note</Text>*/}
 
-			<View style={[globalStyles.row, { flex: 0, width: "85%" }]}>
-				<Pressable
-					style={{ flex: 1, alignItems: "flex-start" }}
-					onPress={() => {
-						navigation.goBack();
-					}}
-				>
-					<MaterialCommunityIcons 
-						name={"arrow-left"} 
-						size={30} 
-						color={"#f2f6ff"} 
-					/>
-				</Pressable>
-				<Text style={[globalStyles.h2, {marginTop: 0}]}>Write A Note</Text>
-				<Menu style={{ flex: 1, alignItems: "flex-end" }}>
-					<MenuTrigger>
-						<MaterialCommunityIcons name={"menu"} size={30} color={"#f2f6ff"} />
-					</MenuTrigger>
+			<Header 
+				menuOptions={
 					<MenuOptions customStyles={globalMenuStyles}>
 						<MenuOption 
 							text={"Set Tags"}
@@ -590,8 +649,10 @@ function ViewNoteScreen({ route, navigation }) {
 							}}
 						/>
 					</MenuOptions>
-				</Menu>
-			</View>
+				}
+				label={"Write A Note"}
+				backAction={() => { navigation.goBack(); }}
+			/>
 
 			{ editMode ? <ScrollView 
 				style={[
@@ -662,9 +723,133 @@ function ViewNoteScreen({ route, navigation }) {
 
 
 function SearchNoteScreen({ route, navigation }) {
+	const selectedNotebook = useSelector((state) => state.selectedNotebook);
+
+	const [searchMode, setSearchMode] = useState(route.params.mode);
+	const [noteList, setNoteList] = useState(getAllNotes());
+	const [onlyThisNotebook, setOnlyThisNotebook] = useState(false);
+	
+	const [searchFilter, setSearchFilter] = useState("");
+
+	useEffect(() => {
+		const focusListener = navigation.addListener("focus", () => {
+			if (onlyThisNotebook) {
+				setNoteList(notes[notebook]);
+			} else {
+				setNoteList(getAllNotes());
+			}
+		});
+		return focusListener;
+	}, [navigation]);
+
+
+
+	const searchFilterCheck = (itemName, filter) => {
+		// NOTE: This assumes filter is already uppercase
+		if (settings.strictFiltering) {
+			return itemName.toUpperCase().indexOf(filter) === 0;
+		} else {
+			return itemName.toUpperCase().indexOf(filter) > -1;
+		}
+	}
+
+	const itemPassesFilter = (item) => {
+		switch (searchMode) {
+			case "name": {
+				//console.log(item.id, "::", searchFilterCheck(item.name, searchFilter));
+				return searchFilterCheck(item.name, searchFilter);
+			}
+			case "tag": {
+				for (let i = 0; i < item.tags.length; i++) {
+					if (searchFilterCheck(item.tags[i], searchFilter)) {
+						return true;
+					}
+				}
+				return false;
+			}
+			default: {
+				return true;
+			}
+		}
+	}
+
 	return (
 		<View style={globalStyles.screen}>
-			<Text style={styles.text}>SEARCH</Text>
+			{/*<Text style={styles.text}>SEARCH</Text>*/}
+			
+			<Header 
+				menuOptions={
+					<MenuOptions customStyles={globalMenuStyles}>
+						{ searchMode !== "name" ? <MenuOption 
+							text={"Search By Name"}
+							onSelect={() => { 
+								setSearchMode("name");
+							}}
+						/> : null }
+						{ searchMode !== "tag" ? <MenuOption 
+							text={"Search By Tag"}
+							onSelect={() => { 
+								setSearchMode("tag");
+							}}
+						/> : null }
+						<MenuOption 
+							text={onlyThisNotebook ? "Search All Notebooks" : "Search Only Selected Notebook"}
+							onSelect={() => { 
+								if (onlyThisNotebook) {
+									setNoteList(getAllNotes());
+									setOnlyThisNotebook(false);
+								} else {
+									setNoteList(notes[selectedNotebook]);
+									setOnlyThisNotebook(true);
+								}
+							}}
+						/>
+					</MenuOptions>
+				}
+				label={"Search"}
+				backAction={() => { navigation.goBack(); }}
+			/>
+
+			<View style={styles.searchBar}>
+				<View style={styles.searchIcon}>
+					<MaterialCommunityIcons 
+						name={"magnify"} 
+						size={25} 
+						color={"#f2f6ff"} 
+					/>
+				</View>
+				<TextInput
+					style={styles.searchInput}
+					placeholderTextColor={"#7c7f8e"}
+					selectionColor={"#74aaff"}
+					placeholder={"Search..."}
+
+					onChangeText={(value) => {
+						setSearchFilter(value.toUpperCase());
+					}}
+					defaultValue={""}
+				/>
+			</View>
+
+			{/*<Text style={globalStyles.smallText}>{searchFilter}</Text>*/}
+
+			<FlatList 
+				style={styles.searchItemsBox}
+				data={noteList}
+				renderItem={({item}) => 
+					itemPassesFilter(item) ? <NoteView
+						data={item}
+						openAction={() => {
+							navigation.navigate("ViewNote", {
+								mode: "modify",
+								note: item,
+								notebook: getNotebookOfNote(item)
+							});
+						}}
+						showActions={false}
+					/> : null
+				}
+			/>
 		</View>
 	)
 }
@@ -1001,6 +1186,36 @@ const styles = StyleSheet.create({
 		marginTop: 15,
 
 		//borderWidth: 2,
+	},
+
+	searchBar: {
+		width: "85%",
+		marginTop: 20,
+
+		backgroundColor: "#16171a",
+		borderRadius: 18,
+		//elevation: 0,
+
+		padding: 10,
+		height: 50,
+
+		flexDirection: "row", 
+		alignItems: "center",
+		justifyContent: "center",
+	},
+
+	searchIcon: {
+		flex: 1,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+
+	searchInput: {
+		flex: 8,
+		color: "#f2f6ff",
+		textAlign: "left",
+		fontFamily: "Inter-Medium",
+		fontSize: 18,
 	},
 
 

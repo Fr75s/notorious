@@ -188,7 +188,7 @@ async function createTaskNotification(task) {
 	const notifyDate = new Date(task.notifyDate)
 	if (currentTime < notifyDate) {
 		console.log("Creating Notification for task", task.id);
-
+		 
 		let notificationTrigger = null; //notifyDate,
 		switch (task.repeatInterval) {
 			case "5sec": {
@@ -242,6 +242,7 @@ async function createTaskNotification(task) {
 				categoryIdentifier: "taskNotifActions",
 				data: {
 					taskName: task.name,
+					startDate: notifyDate.toLocaleString()
 				}
 			},
 			identifier: task.id,
@@ -837,10 +838,10 @@ export default function TasksScreen({ navigation }) {
 const styles = StyleSheet.create({
 	logo: {
 		position: "absolute",
-		width: 250,
-		height: 62.5,
-		left: 10,
-		top: 10,
+		width: 200,
+		height: 50,
+		left: 15,
+		top: 15,
 	},
 
 

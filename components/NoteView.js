@@ -5,7 +5,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { globalMenuStyles, globalMDStyles, globalStyles, globalMenuDestructiveText } from "./GlobalStyles";
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 
-export default function NoteView({ data, notebook, openAction, longOpenAction, moveAction, archiveAction, deleteAction, permaDeleteAction }) {
+export default function NoteView({ data, notebook, openAction, longOpenAction, moveAction, archiveAction, deleteAction, permaDeleteAction, showActions = true }) {
 	const iconSize = 30;
 
 	const prettyTags = () => {
@@ -85,7 +85,7 @@ export default function NoteView({ data, notebook, openAction, longOpenAction, m
 
 
 
-			<Menu style={styles.menuButton}>
+			{ showActions ? <Menu style={styles.menuButton}>
 				<MenuTrigger>
 					<MaterialCommunityIcons 
 						//style={styles.menuButton}
@@ -113,7 +113,7 @@ export default function NoteView({ data, notebook, openAction, longOpenAction, m
 						customStyles={globalMenuDestructiveText}
 					/> : null}
 				</MenuOptions>
-			</Menu>
+			</Menu> : null}
 		</View>
 	)
 }
