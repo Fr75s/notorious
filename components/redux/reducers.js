@@ -27,6 +27,12 @@ import {
 	REMOVE_NOTEBOOK,
 	CHANGE_SELECTED_NOTEBOOK
 } from "./NoteActions";
+import {
+	ADD_CALENDAR_ITEM,
+	DELETE_CALENDAR_ITEM,
+	MODIFY_CALENDAR_ITEM,
+	RESET_CALENDAR
+} from "./CalendarActions";
 import { 
 	taskIndexFromID,
 	noteIndexFromID,
@@ -38,7 +44,7 @@ const initialSettingsState = {
 	"strictFiltering": false,
 	"oldTaskThreshold": 7,
 	"notesDrawerOnLeft": false,
-}
+};
 
 const initialTasksState = [
 	{
@@ -59,7 +65,7 @@ const initialTasksState = [
 
 		]
 	}
-]
+];
 
 const initialNotesState = {
 	"Standard": [
@@ -71,7 +77,42 @@ const initialNotesState = {
 	"Deleted": [
 
 	]
+};
+
+/*
+{
+	2023: {
+		0: [
+			[],
+			[],
+			[
+				{
+					name: "MY ITEM!",
+					desc: "It's my item!"
+				}
+			],
+			[],
+			...
+		]
+		3: [
+			[
+				{
+					name: "April",
+					desc: "For the 1st day"
+				}
+			],
+			[],
+			...
+		]
+	},
+	2024: {
+		2: [
+			...
+		]
+	}
 }
+*/
+const initialCalendarState = {};
 
 const initialSelectedNotebookState = "Standard";
 
@@ -326,11 +367,45 @@ const selectedNotebookReducer = (state = initialSelectedNotebookState, action) =
 	}
 }
 
+const calendarReducer = (state = initialCalendarState, action) => {
+	switch (action.type) {
+		case ADD_CALENDAR_ITEM: {
+			const { item, year, month, day } = action.payload
+			let newCal = state;
+
+			if (!newCal[year])
+				newCal[year] = {}
+			
+			if (!newCal[year][month]) {
+				newCal[year][month] = [];
+				for (let d = new Date(year, month, 1); d < new Date(year, month + 1, 1); d.setDate(d.getDate() + 1)) {
+					newCal[year][month][d.getDate() - 1] = [];
+				}
+			}
+
+			if (newCal[year][month][day - 1].length === 0) {
+				newCal[year][month][day - 1] = [item]
+			} else {
+				newCal[year][month][day - 1].push(item);
+			}
+
+			return newCal;
+		}
+		case RESET_CALENDAR: {
+			//console.log("RESETTING");
+			return {};
+		}
+		default:
+			return state;
+	}
+}
+
 mainReducer = combineReducers({ 
 	settings: settingReducer, 
 	tasks: taskReducer,
 	notes: noteReducer,
 	selectedNotebook: selectedNotebookReducer,
+	calendar: calendarReducer,
 });
 
 export default mainReducer;

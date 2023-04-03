@@ -2,8 +2,10 @@
   "expo": {
     "name": "Notorious",
     "slug": "Notorious",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "com.fr75s.notorious",
+
     "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "dark",
     "primaryColor": "#74aaff",
@@ -15,6 +17,7 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+
     "plugins": [
       [
         "expo-notifications",
@@ -22,8 +25,24 @@
           "icon": "./assets/icons/notification-icon.png",
           "color": "#74aaff"
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": ["./assets/fonts/Inter/Inter-Regular.ttf"],
+          "widgets": [
+            {
+              "name": "Calendar",
+              "label": "Calendar",
+              "minWidth": "240dp",
+              "minHeight": "300dp",
+              "description": "Notorious Calendar"
+            }
+          ]
+        }
       ]
     ],
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fr75s.notorious"

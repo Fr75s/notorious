@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable } from "react-native";
+import { nativeApplicationVersion } from "expo-application";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useIsFocused } from "@react-navigation/native";
@@ -189,7 +190,7 @@ export default function SettingsScreen({ navigation }) {
 			
 
 			<Text style={styles.versionInfo}>
-				Notorious v0.1.1
+				Notorious v{nativeApplicationVersion}
 			</Text>
 		</View>
 	)

@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from "react";
-import { Alert, Easing, Platform, StyleSheet } from "react-native";
+import { Text, Alert, Easing, Platform, StyleSheet } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
@@ -8,6 +8,7 @@ import Constants from "expo-constants";
 import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
+import * as Linking from "expo-linking";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import { NavigationContainer } from "@react-navigation/native";
@@ -23,9 +24,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import TasksScreen from "./screens/Tasks.js";
 import NotesScreen from "./screens/Notes.js";
+import RecurScreen from "./screens/Recur";
 import CalendarScreen from "./screens/Calendar.js";
 import SettingsScreen from "./screens/Settings.js";
 
+// Set the default way to handle notifications
 Notifications.setNotificationHandler({
 	handleNotification: async() => ({
 		shouldShowAlert: true,
@@ -34,6 +37,7 @@ Notifications.setNotificationHandler({
 	})
 })
 
+// Set notification actions for notifications
 Notifications.setNotificationCategoryAsync(
 	"taskNotifActions",
 	[
@@ -48,29 +52,11 @@ Notifications.setNotificationCategoryAsync(
 	]
 )
 
+// Linking
+const linkingPrefix = Linking.createURL("/");
+
 // Bottom Tab Navigator
 const Tab = createBottomTabNavigator();
-
-// Modal Stack
-/*
-const modalStack = createModalStack({
-	Alert: AlertModal,
-	AlertModal,
-}, {
-	animateInConfig: {
-		easing: Easing.inOut(Easing.linear),
-		duration: 0,
-	},
-	animateOutConfig: {
-		easing: Easing.inOut(Easing.linear),
-		duration: 0,
-	},
-
-	backdropOpacity: 0.3,
-	backdropColor: "#000000",
-	backBehavior: "clear",
-});
-*/
 
 // Tab State
 export default function App() {
@@ -81,6 +67,10 @@ export default function App() {
 	const responseListener = useRef();
 	
 	const [appIsReady, setAppIsReady] = useState(false);
+
+	const linking = {
+		prefixes: [linkingPrefix],
+	};
 
 	useEffect(() => {
 		async function loadResourcesAsync() {
@@ -139,7 +129,7 @@ export default function App() {
 	return (
 		<Provider store={store}>
 			<MenuProvider>
-				<NavigationContainer>
+				<NavigationContainer linking={linking}>
 					<Tab.Navigator 
 						sceneContainerStyle={styles.navScreens} 
 						screenOptions={navigationOpts}
@@ -168,6 +158,15 @@ export default function App() {
 							options = {{
 								tabBarIcon: ({ color, size }) => (
 									<MaterialCommunityIcons name="calendar" color={color} size={size} />
+								)
+							}}
+						/>
+						<Tab.Screen 
+							name="WidgetPreview" 
+							component={RecurScreen} 
+							options = {{
+								tabBarIcon: ({ color, size }) => (
+									<MaterialCommunityIcons name="widgets" color={color} size={size} />
 								)
 							}}
 						/>

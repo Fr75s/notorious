@@ -96,6 +96,7 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 	}
 
 	let row = 0;
+
 	for (let d = startDate; d < endDate; d.setDate(d.getDate() + 1)) {
 		//console.log(dateData.year + "-" + dateData.month + "-" + d.getDate() + ";;;" + dateToISO(selectedDate));
 		//console.log("MD", d.toLocaleDateString(), i, monthData);

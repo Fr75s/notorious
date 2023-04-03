@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 import * as Notifications from "expo-notifications";
+import * as Linking from "expo-linking";
+
 import { useSelector } from "react-redux";
 import store from "../components/redux/store";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -159,18 +161,38 @@ function getCalendarData(year, month) {
 	
 }
 
-export default function CalendarScreen({ navigation }) {
+export default function CalendarScreen({ navigation, route }) {
+	// List of calendar items
+	const [itemList, setItemList] = useState([]);
+	const [loadedItems, setLoadedItems] = useState([]);
+
+	// The selected year/month
 	const [thisDate, setThisDate] = useState({
 		year: new Date().getFullYear(), 
 		month: new Date().getMonth()
 	});
-	
-	const [itemList, setItemList] = useState([]);
-	const [loadedItems, setLoadedItems] = useState([]);
 
+	// Selected Date
 	const [selectedDate, setSelectedDate] = useState(new Date());
 
+	// Settings
 	settings = useSelector(state => state.settings);
+
+	// Linking
+	if (route.params) {
+		console.log(route.params);
+
+		const newSelectedDate = new Date(route.params.year, route.params.month, route.params.day);
+		newSelectedDate.setHours(0, 0, 0, 0);
+		setSelectedDate(newSelectedDate);
+
+		setThisDate({
+			year: Number(route.params.year),
+			month: Number(route.params.month)
+		});
+
+		route.params = null;
+	}
 
 	// Get Stuff
 	useEffect(() => {
@@ -179,7 +201,6 @@ export default function CalendarScreen({ navigation }) {
 		const focusListener = navigation.addListener("focus", () => {
 			getCalendarData(thisDate.year, thisDate.month)
 				.then((res) => {
-					console.log(res);
 					setItemList(res);
 				});
 		});
