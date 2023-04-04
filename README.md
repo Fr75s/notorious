@@ -7,11 +7,11 @@ A simple note-taking app built using React Native. An app I made to get familiar
 ## Gallery
 
 <p float="left">
-    <img src="assets/screenshots/screen_1.png" width="20%" />
-    <img src="assets/screenshots/screen_2.png" width="20%" />
-    <img src="assets/screenshots/screen_3.png" width="20%" />
-    <img src="assets/screenshots/screen_4.png" width="20%" />
-    <img src="assets/screenshots/screen_5.png" width="20%" />
+    <img src="assets/screenshots/screen_1.png" width="15%" />
+    <img src="assets/screenshots/screen_2.png" width="15%" />
+    <img src="assets/screenshots/screen_3.png" width="15%" />
+    <img src="assets/screenshots/screen_4.png" width="15%" />
+    <img src="assets/screenshots/screen_5.png" width="15%" />
 </p>
 
 ***
