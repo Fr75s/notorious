@@ -22,6 +22,7 @@ import {
 	modifyTask,
 	changeTaskSection,
 } from "../components/redux/TaskActions";
+import * as calActions from "../components/redux/CalendarActions";
 import { globalMenuStyles, globalStyles, globalMenuDestructiveText } from "./../components/GlobalStyles.js";
 import TaskView from "./../components/TaskView.js";
 import FAB from "./../components/FAB.js";
@@ -55,6 +56,13 @@ let tasks = []
  * 1: Partially Finished
  * 2: Finished
  */
+
+const repeatIntervalToType = {
+	"5sec": "date",
+	"day": "daily",
+	"week": "weekly",
+	"year": "yearly"
+}
 
 // Check if no tasks are present
 function emptyTasks() {
@@ -190,6 +198,7 @@ async function createTaskNotification(task) {
 		console.log("Creating Notification for task", task.id);
 		 
 		let notificationTrigger = null; //notifyDate,
+		let notificationType = (task.repeatInterval ? repeatIntervalToType(task.repeatInterval) : "date");
 		switch (task.repeatInterval) {
 			case "5sec": {
 				notificationTrigger = {
@@ -250,6 +259,27 @@ async function createTaskNotification(task) {
 		});
 		if (result) {
 			console.log("Notification successfully created (", task.id, ")");
+
+			const calTime = notifyDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+
+			const calItem = {
+				id: task.id,
+				title: task.name,
+				body: task.desc,
+				time: calTime,
+				triggerData: notificationTrigger
+			}
+			store.dispatch(calActions.addCalendarItem(calItem, notificationType, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()));
+			console.log("Notification added to calendar (", task.id, ")");
+
+			try {
+				const calString = JSON.stringify(store.getState().calendar);
+				await AsyncStorage.setItem("@calendar", calString);
+				console.log("Calendar Data successfully saved.");
+			} catch (e) {
+				console.log("There was an error saving calendar data:");
+				console.log(e);
+			}
 		}
 	}
 }
@@ -257,6 +287,21 @@ async function createTaskNotification(task) {
 async function cancelTaskNotification(task) {
 	console.log("Cancelling Notification for task", task.id);
 	await Notifications.cancelScheduledNotificationAsync(task.id);
+	console.log("Notification successfully cancelled.");
+
+	const notifyDate = new Date(task.notifyDate);
+	const repeatInterval = (task.repeatInterval ? repeatIntervalToType(task.repeatInterval) : "date");
+	store.dispatch(calActions.deleteCalendarItem(task.id, repeatInterval, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()))
+	console.log("Calendar Item successfully removed.");
+
+	try {
+		const calString = JSON.stringify(store.getState().calendar);
+		await AsyncStorage.setItem("@calendar", calString);
+		console.log("Calendar Data successfully saved.");
+	} catch (e) {
+		console.log("There was an error saving calendar data:");
+		console.log(e);
+	}
 }
 
 
@@ -797,6 +842,14 @@ function NewTask({ route, navigation }) {
 							//cancelTaskNotification(taskMod);
 							Notifications.cancelScheduledNotificationAsync(taskMod.id)
 								.then(() => {
+									console.log("Notification successfully cancelled.");
+
+									const notifyDate = new Date(taskMod.notifyDate);
+									const repeatInterval = (taskMod.repeatInterval ? repeatIntervalToType(taskMod.repeatInterval) : "date");
+
+									store.dispatch(calActions.deleteCalendarItem(taskMod.id, repeatInterval, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()))
+									console.log("Calendar Item successfully removed.");
+									
 									console.log("Schedule New?:", notifEnabled);
 									if (notifEnabled) {
 										createTaskNotification(newTaskObj);

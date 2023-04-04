@@ -19,6 +19,7 @@ import store from "./components/redux/store";
 import { setSettings } from "./components/redux/SettingActions";
 import { setTaskData } from "./components/redux/TaskActions";
 import { setNotes } from "./components/redux/NoteActions";
+import { setCalendar } from "./components/redux/CalendarActions";
 import { Provider } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -107,6 +108,12 @@ export default function App() {
 				if (loadedNotes) {
 					console.log("Preloaded Notes:", loadedNotes);
 					store.dispatch(setNotes(JSON.parse(loadedNotes)));
+				}
+
+				const loadedCalendar = await AsyncStorage.getItem("@calendar");
+				if (loadedCalendar) {
+					console.log("Preloaded Calendar");
+					store.dispatch(setCalendar(JSON.parse(loadedCalendar)));
 				}
 
 				// Return fonts

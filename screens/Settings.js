@@ -34,7 +34,7 @@ async function SaveSettings(settingsObj) {
 // Switch
 function SettingSwitch({ label, setting, customAction }) {
 	return (
-		<View style={[globalStyles.row, { width: "85%" }]}>
+		<View style={[globalStyles.row, { width: "85%", marginTop: 10 }]}>
 			<Text style={[globalStyles.h3, styles.settingLabel]}>
 				{label}
 			</Text>
@@ -87,7 +87,7 @@ export default function SettingsScreen({ navigation }) {
 			<ScrollView style={globalStyles.scrollScreen} contentContainerStyle={globalStyles.scrollScreenContent}>
 				<Text style={[globalStyles.h1, {marginBottom: 15}]}>Settings</Text>
 			
-				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Tasks</Text>
+				<Text style={styles.settingHeader}>Tasks</Text>
 
 				<SettingSwitch 
 					label={"Use Partial Task Completions"}
@@ -129,16 +129,21 @@ export default function SettingsScreen({ navigation }) {
 					/>
 				</View>
 
-				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Notes</Text>
+				<Text style={styles.settingHeader}>Notes</Text>
 
 				<SettingSwitch 
 					label={"Notebook Drawer On Left Side"}
 					setting={"notesDrawerOnLeft"}
 				/>
 
-				
+				<Text style={styles.settingHeader}>Calendar</Text>
+		
+				<SettingSwitch 
+					label={"Show Names on Calendars"}
+					setting={"verboseCalendar"}
+				/>
 
-				<Text style={[globalStyles.h2, {marginBottom: 20}]}>Actions</Text>
+				<Text style={styles.settingHeader}>Actions</Text>
 
 				<SettingAction 
 					label={"Export Data"}
@@ -198,6 +203,11 @@ export default function SettingsScreen({ navigation }) {
 
 
 const styles = StyleSheet.create({
+	settingHeader: {
+		...globalStyles.h2,
+		marginBottom: 20
+	},
+	
 	settingLabel: {
 		flex: 4,
 		alignItems: "flex-start",

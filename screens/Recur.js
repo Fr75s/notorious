@@ -9,6 +9,7 @@ import store from "../components/redux/store";
 import * as calActions from "../components/redux/CalendarActions";
 
 import CalendarWidget from "../components/widgets/CalendarWidget";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { globalStyles } from "./../components/GlobalStyles.js";
 import FAB from "../components/FAB";
 
@@ -35,25 +36,35 @@ export default function RecurScreen() {
 
 			<View style={{ flexDirection: "row", gap: 15, marginTop: 30 }}>
 				<Pressable
-					onPress={() => { console.log(calendar[2023] ? calendar[2023][4] : "um") }}
+					onPress={() => { 
+						console.log(calendar[2023] ? calendar[2023][3] : "um") ;
+						AsyncStorage.getItem("@calendar").then((res) => {
+							console.log(res);
+						})
+					}}
 				>
 					<Text style={globalStyles.h3}>LOG</Text>
 				</Pressable>
 				<Pressable
 					onPress={() => {
 						const calItem = {
-							id: "baueba-2iaubfu",
-							name: "hi"
+							id: "test-id",
+							title: "Hello",
+							body: "I am dededebug",
+							triggerData: {
+								hour: 15,
+								minute: 0,
+							}
 						}
-						store.dispatch(calActions.addCalendarItem(calItem, 2023, 4, 5)); 
+						store.dispatch(calActions.addCalendarItem(calItem, "date", 2023, 4, 5)); 
 					}}
 				>
 					<Text style={globalStyles.h3}>ADD</Text>
 				</Pressable>
 				<Pressable
 					onPress={() => {
-						const id = "baueba-2iaubfu"
-						store.dispatch(calActions.deleteCalendarItem(id, 2023, 4, 5)); 
+						const id = "test-id"
+						store.dispatch(calActions.deleteCalendarItem(id, "date", 2023, 4, 5)); 
 					}}
 				>
 					<Text style={globalStyles.h3}>DELETE</Text>

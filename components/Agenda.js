@@ -6,7 +6,9 @@ import Animated, { useSharedValue, useAnimatedStyle } from "react-native-reanima
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
+import { getItemsFromCalendarDate } from './helpers';
 import { globalStyles } from "./GlobalStyles";
+import store from "./redux/store";
 
 const monthIcons = {
 	0: "snowflake",
@@ -71,17 +73,28 @@ function MonthDay({dateData, data, onDayPress}) {
 			}]}>
 				{data.day}
 			</Text>
-			<View style={styles.calMonthItemDotRow}>
-				{data.items ? <View style={[styles.calMonthItemDot, {
-					backgroundColor: "#7c7f8e",
+			{ !store.getState().settings["verboseCalendar"] ? <View style={styles.calMonthItemDotRow}>
+				{ data.items && data.items.length > 0 ? <View style={[styles.calMonthItemDot, {
+					backgroundColor: "#74aaff",
 				}]}/> : null}
 				{ data.items && data.items.length > 1 ? <View style={[styles.calMonthItemDot, {
-					backgroundColor: "#7c7f8e"
+					backgroundColor: "#74aaff"
 				}]}/> : null}
-				{ data.items && data.items.length > 2  ? <View style={[styles.calMonthItemDot, {
-					backgroundColor: "#7c7f8e"
+				{ data.items && data.items.length > 2 ? <View style={[styles.calMonthItemDot, {
+					backgroundColor: "#74aaff"
 				}]}/> : null}
-			</View>
+			</View> : <View style={styles.calMonthItemLabelRow}>
+				{ data.items && data.items.length > 0 ? 
+					<Text style={styles.calMonthItemLabel} numberOfLines={1} >
+						{data.items[0].title}
+					</Text>
+				: null}
+				{ data.items && data.items.length > 1 ? 
+					<Text style={styles.calMonthItemLabel} numberOfLines={1} >
+						{data.items[1].title}
+					</Text>
+				: null}
+			</View>}
 		</Pressable>
 	)
 }
@@ -100,6 +113,11 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 	for (let d = startDate; d < endDate; d.setDate(d.getDate() + 1)) {
 		//console.log(dateData.year + "-" + dateData.month + "-" + d.getDate() + ";;;" + dateToISO(selectedDate));
 		//console.log("MD", d.toLocaleDateString(), i, monthData);
+		let itemsToday = getItemsFromCalendarDate(d, monthData);
+
+		//console.log(itemsToday);
+		
+		/*
 		if (monthData && monthData[d.getDate() - 1]) {
 			dates[row][d.getDay()] = {
 				...monthData[d.getDate() - 1]
@@ -107,9 +125,10 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 		} else {
 			dates[row][d.getDay()] = {}
 		}
+		*/
 		
 		dates[row][d.getDay()] = {
-			...dates[row][d.getDay()],
+			items: itemsToday,
 			day: d.getDate(),
 			selected: (dateToISO(new Date(dateData.year, dateData.month, d.getDate())) === dateToISO(selectedDate))
 		};
@@ -119,6 +138,8 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 			dates[row] = [];
 		}
 	}
+
+	console.log("-----");
 
 	for (let d = endDate.getDay(); d <= 6; d++) {
 		dates[row][d] = {};
@@ -147,20 +168,15 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 export default function Agenda({
 	dateData,
 	itemsThisMonth,
-	itemsNextMonth,
-	itemsPrevMonth,
+	refresh,
 	onNextMonth,
 	onPrevMonth,
 	selectedDate,
+	selectedDateData,
 	onSelectDate,
 	onChangeMonthYear
 }) {
 	//console.log("RE");
-
-	const [todayData, setTodayData] = useState(
-		itemsThisMonth && itemsThisMonth[new Date().getDate()] && itemsThisMonth[new Date().getDate()].items
-		? itemsThisMonth[new Date().getDate()].items
-		: null);
 
 	return (
 		<View style={styles.calView}>
@@ -226,7 +242,6 @@ export default function Agenda({
 					monthData={itemsThisMonth}
 					selectedDate={selectedDate}
 					onDayPress={(day, items) => {
-						setTodayData(items);
 						onSelectDate(day);
 					}}
 				/>
@@ -237,7 +252,7 @@ export default function Agenda({
 			</Text>
 
 			<FlatList
-				data={todayData}
+				data={selectedDateData}
 				style={{ width: "100%" }}
 				renderItem={({item}) => (
 					<View style={styles.agendaItem}>
@@ -324,11 +339,32 @@ const styles = StyleSheet.create({
 		justifyContent: "center",
 	},
 
+	calMonthItemLabelRow: {
+		position: "absolute",
+		bottom: 2,
+		gap: -2,
+
+		width: "100%",
+
+		alignContent: "center",
+		justifyContent: "center",
+	},
+
 	calMonthItemDot: {
 		width: 5,
 		height: 5,
 		
 		borderRadius: 5,
+	},
+
+	calMonthItemLabel: {
+		...globalStyles.smallText,
+		width: "100%",
+		
+		fontSize: 8,
+		textAlign: "center",
+
+		color: "#74aaff"
 	},
 
 

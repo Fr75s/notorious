@@ -31,12 +31,13 @@ import {
 	ADD_CALENDAR_ITEM,
 	DELETE_CALENDAR_ITEM,
 	MODIFY_CALENDAR_ITEM,
-	RESET_CALENDAR
+	RESET_CALENDAR,
+	SET_CALENDAR
 } from "./CalendarActions";
 import { 
 	taskIndexFromID,
 	noteIndexFromID,
-} from "./helpers";
+} from "../helpers";
 
 const initialSettingsState = {
 	"usePartialCompletions": false,
@@ -44,6 +45,7 @@ const initialSettingsState = {
 	"strictFiltering": false,
 	"oldTaskThreshold": 7,
 	"notesDrawerOnLeft": false,
+	"verboseCalendar": false,
 };
 
 const initialTasksState = [
@@ -370,31 +372,148 @@ const selectedNotebookReducer = (state = initialSelectedNotebookState, action) =
 const calendarReducer = (state = initialCalendarState, action) => {
 	switch (action.type) {
 		case ADD_CALENDAR_ITEM: {
-			const { item, year, month, day } = action.payload
+			const { item, repeatType, year, month, day } = action.payload
 			let newCal = state;
 
-			if (!newCal[year])
-				newCal[year] = {}
-			
-			if (!newCal[year][month]) {
-				newCal[year][month] = [];
-				for (let d = new Date(year, month, 1); d < new Date(year, month + 1, 1); d.setDate(d.getDate() + 1)) {
-					newCal[year][month][d.getDate() - 1] = [];
-				}
-			}
+			switch (repeatType) {
+				case "date": {
+					if (!newCal[year])
+						newCal[year] = {}
+					
+					if (!newCal[year][month]) {
+						newCal[year][month] = [];
+						for (let d = new Date(year, month, 1); d < new Date(year, month + 1, 1); d.setDate(d.getDate() + 1)) {
+							newCal[year][month][d.getDate() - 1] = [];
+						}
+					}
 
-			if (newCal[year][month][day - 1].length === 0) {
-				newCal[year][month][day - 1] = [item]
-			} else {
-				newCal[year][month][day - 1].push(item);
+					newCal[year][month][day - 1].push(item);
+
+					break;
+				}
+				case "daily": {
+					if (!newCal["daily"])
+						newCal["daily"] = []
+					
+					newCal["daily"].push(item);
+					break;
+				}
+				case "weekly": {
+					if (!newCal["weekly"])
+						newCal["weekly"] = [[], [], [], [], [], [], []]
+					
+					// Get weekday
+					const initDate = new Date(year, month, day);
+					newCal["weekly"][initDate.getDay()].push(item);
+
+					break;
+				}
+				case "yearly": {
+					if (!newCal["yearly"])
+						newCal["yearly"] = {}
+					
+					if (!newCal["yearly"][month]) {
+						newCal["yearly"][month] = [];
+						for (let d = new Date(year, month, 1); d < new Date(year, month + 1, 1); d.setDate(d.getDate() + 1)) {
+							newCal["yearly"][month][d.getDate() - 1] = [];
+						}
+					}
+					
+					newCal["yearly"][month][day - 1].push(item);
+					break;
+				}
 			}
 
 			return newCal;
 		}
+
+		case DELETE_CALENDAR_ITEM: {
+			const { id, repeatType, year, month, day } = action.payload
+			let newCal = state;
+
+			switch (repeatType) {
+				case "date": {
+					try {
+						for (let i = 0; i < newCal[year][month][day - 1].length; i++) {
+							if (newCal[year][month][day - 1][i].id === id) {
+								newCal[year][month][day - 1].splice(i, 1);
+							}
+						}
+					} catch (e) {
+						if (e instanceof TypeError)
+							console.log("Item doesn't exist");
+						else
+							console.error(e);
+					}
+
+					break;
+				}
+				case "daily": {
+					try {
+						for (let i = 0; i < newCal["daily"].length; i++) {
+							if (newCal["daily"][i].id === id) {
+								newCal["daily"].splice(i, 1);
+							}
+						}
+					} catch (e) {
+						if (e instanceof TypeError)
+							console.log("Item doesn't exist");
+						else
+							console.error(e);
+					}
+					
+
+					break;
+				}
+				case "weekly": {
+					const weekdayIdx = new Date(year, month, day).getDay();
+
+					try {
+						for (let i = 0; i < newCal["weekly"][weekdayIdx].length; i++) {
+							if (newCal["weekly"][weekdayIdx][i].id === id) {
+								newCal["weekly"][weekdayIdx].splice(i, 1);
+							}
+						}
+					} catch (e) {
+						if (e instanceof TypeError)
+							console.log("Item doesn't exist");
+						else
+							console.error(e);
+					}
+
+					break;
+				}
+				case "yearly": {
+					try {
+						for (let i = 0; i < newCal["yearly"][month][day - 1].length; i++) {
+							if (newCal["yearly"][month][day - 1][i].id === id) {
+								newCal["yearly"][month][day - 1].splice(i, 1);
+							}
+						}
+					} catch (e) {
+						if (e instanceof TypeError)
+							console.log("Item doesn't exist");
+						else
+							console.error(e);
+					}
+					
+					break;
+				}
+			}
+
+			return newCal;
+		}
+
+		case SET_CALENDAR: {
+			const { data } = action.payload;
+			return data;
+		}
+
 		case RESET_CALENDAR: {
 			//console.log("RESETTING");
 			return {};
 		}
+
 		default:
 			return state;
 	}

@@ -26,8 +26,9 @@ export default async function widgetTaskHandler(props) {
 		case 'WIDGET_CLICK': {
 			//const newUpper = props.clickAction === "upper" ? "That tickles :)" : "I WANT ATTENTION";
 			//props.renderWidget(<Widget {...widgetInfo}/>)
-			console.log(props.clickAction);
-			console.log(props.clickActionData);
+			//console.log(props.clickAction);
+			//console.log(props.clickActionData);
+			
 			if (props.clickAction === "LEFT" || props.clickAction === "RIGHT") {
 				const currentMonth = new Date(props.clickActionData.year, props.clickActionData.month);
 				if (props.clickAction === "LEFT")

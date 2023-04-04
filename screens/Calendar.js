@@ -5,14 +5,13 @@ import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
 
 import { useSelector } from "react-redux";
-import store from "../components/redux/store";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 import Agenda from "../components/Agenda";
-
+import { getItemsFromCalendarDate } from '../components/helpers';
 import { globalStyles, globalMenuStyles } from "./../components/GlobalStyles.js";
 
 
@@ -163,7 +162,6 @@ function getCalendarData(year, month) {
 
 export default function CalendarScreen({ navigation, route }) {
 	// List of calendar items
-	const [itemList, setItemList] = useState([]);
 	const [loadedItems, setLoadedItems] = useState([]);
 
 	// The selected year/month
@@ -174,9 +172,17 @@ export default function CalendarScreen({ navigation, route }) {
 
 	// Selected Date
 	const [selectedDate, setSelectedDate] = useState(new Date());
+	const [selectedDateData, setSelectedDateData] = useState([]);
+
+	const [refresh, setRefresh] = useState(false);
 
 	// Settings
 	settings = useSelector(state => state.settings);
+
+	// Calendar Data
+	itemList = useSelector((state) => {
+		return state.calendar;
+	});
 
 	// Linking
 	if (route.params) {
@@ -184,12 +190,18 @@ export default function CalendarScreen({ navigation, route }) {
 
 		const newSelectedDate = new Date(route.params.year, route.params.month, route.params.day);
 		newSelectedDate.setHours(0, 0, 0, 0);
-		setSelectedDate(newSelectedDate);
 
 		setThisDate({
 			year: Number(route.params.year),
 			month: Number(route.params.month)
 		});
+
+		setRefresh(!refresh);
+
+		setSelectedDate(newSelectedDate);
+		setSelectedDateData(getItemsFromCalendarDate(newSelectedDate, itemList));
+
+		console.log(newSelectedDate);
 
 		route.params = null;
 	}
@@ -199,10 +211,9 @@ export default function CalendarScreen({ navigation, route }) {
 		//console.log("naw");
 		//console.log("Called");
 		const focusListener = navigation.addListener("focus", () => {
-			getCalendarData(thisDate.year, thisDate.month)
-				.then((res) => {
-					setItemList(res);
-				});
+			const newSelectedDate = new Date(selectedDate);
+			setSelectedDate(newSelectedDate);
+			setRefresh(!refresh);
 		});
 		return focusListener;
 	}, []);
@@ -226,12 +237,16 @@ export default function CalendarScreen({ navigation, route }) {
 									year: todayDate.getFullYear(),
 									month: todayDate.getMonth()
 								})
+								/*
 								getCalendarData(todayDate.getFullYear(), todayDate.getMonth())
 									.then((res) => {
 										setItemList(res);
 									});
+								*/
+								setRefresh(!refresh);
 			
 								setSelectedDate(todayDate);
+								setSelectedDateData(getItemsFromCalendarDate(todayDate, itemList));
 							}}
 						/>
 					</MenuOptions>
@@ -240,6 +255,7 @@ export default function CalendarScreen({ navigation, route }) {
 
 			<Agenda 
 				dateData={thisDate}
+				refresh={refresh}
 				
 				itemsThisMonth={itemList}
 				onNextMonth={() => {
@@ -250,10 +266,13 @@ export default function CalendarScreen({ navigation, route }) {
 						year: newDate.getFullYear(),
 						month: newDate.getMonth()
 					})
-					getCalendarData(newDate.getFullYear(), newDate.getMonth())
+					/*
+					getCalendarData(todayDate.getFullYear(), todayDate.getMonth())
 						.then((res) => {
 							setItemList(res);
 						});
+					*/
+					setRefresh(!refresh);
 				}}
 				onPrevMonth={() => {
 					const newDate = new Date(thisDate.year, thisDate.month);
@@ -263,18 +282,23 @@ export default function CalendarScreen({ navigation, route }) {
 						year: newDate.getFullYear(),
 						month: newDate.getMonth()
 					})
-					getCalendarData(newDate.getFullYear(), newDate.getMonth())
+					/*
+					getCalendarData(todayDate.getFullYear(), todayDate.getMonth())
 						.then((res) => {
 							setItemList(res);
 						});
+					*/
+					setRefresh(!refresh);
 				}}
 
 				selectedDate={selectedDate}
+				selectedDateData={selectedDateData}
 				onSelectDate={(day) => {
 					const newSelectedDate = new Date(thisDate.year, thisDate.month, day);
 					newSelectedDate.setHours(0, 0, 0, 0);
 
 					setSelectedDate(newSelectedDate);
+					setSelectedDateData(getItemsFromCalendarDate(newSelectedDate, itemList));
 				}}
 				onChangeMonthYear={(newDate) => {
 					console.log(newDate);
@@ -282,15 +306,19 @@ export default function CalendarScreen({ navigation, route }) {
 						year: newDate.getFullYear(),
 						month: newDate.getMonth()
 					})
-					getCalendarData(newDate.getFullYear(), newDate.getMonth())
+					/*
+					getCalendarData(todayDate.getFullYear(), todayDate.getMonth())
 						.then((res) => {
 							setItemList(res);
 						});
+					*/
+					setRefresh(!refresh);
 					
 					const newSelectedDate = new Date(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
 					newSelectedDate.setHours(0, 0, 0, 0);
 
 					setSelectedDate(newSelectedDate);
+					setSelectedDateData(getItemsFromCalendarDate(newSelectedDate, itemList));
 				}}
 			/>
 		</GestureHandlerRootView>
