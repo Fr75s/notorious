@@ -45,6 +45,8 @@ export default function CalendarWidget({ year = new Date().getFullYear() , month
 		}
 	}
 
+	console.log("#####");
+
 	for (let d = endDate.getDay(); d <= 6; d++) {
 		dates[row][d] = null;
 	}
@@ -168,7 +170,7 @@ export default function CalendarWidget({ year = new Date().getFullYear() , month
 					...styles.calendarText,
 					backgroundColor: (data && data.day === selectedDay ? "#31333a" : null)
 				}} />
-				{ !store.getState().settings["verboseCalendar"] ? <FlexWidget style={styles.dotContainer}>
+				{ !settings["verboseCalendar"] ? <FlexWidget style={styles.dotContainer}>
 					{data && data.items && data.items.length > 0 ? <FlexWidget style={styles.dot}/> : null}
 					{data && data.items && data.items.length > 1 ? <FlexWidget style={styles.dot}/> : null}
 					{data && data.items && data.items.length > 2 ? <FlexWidget style={styles.dot}/> : null}

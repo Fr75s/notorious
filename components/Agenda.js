@@ -99,7 +99,12 @@ function MonthDay({dateData, data, onDayPress}) {
 	)
 }
 
-function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
+function DaysInMonth({
+	dateData, 
+	monthData, 
+	selectedDate, 
+	onDayPress,
+}) {
 	let dates = [[]];
 	const startDate = new Date(dateData.year, dateData.month, 1);
 	const endDate = new Date(dateData.year, dateData.month + 1, 1);
@@ -114,18 +119,9 @@ function DaysInMonth({dateData, monthData, selectedDate, onDayPress}) {
 		//console.log(dateData.year + "-" + dateData.month + "-" + d.getDate() + ";;;" + dateToISO(selectedDate));
 		//console.log("MD", d.toLocaleDateString(), i, monthData);
 		let itemsToday = getItemsFromCalendarDate(d, monthData);
+		//console.log(itemsToday);
 
 		//console.log(itemsToday);
-		
-		/*
-		if (monthData && monthData[d.getDate() - 1]) {
-			dates[row][d.getDay()] = {
-				...monthData[d.getDate() - 1]
-			};
-		} else {
-			dates[row][d.getDay()] = {}
-		}
-		*/
 		
 		dates[row][d.getDay()] = {
 			items: itemsToday,
@@ -177,6 +173,8 @@ export default function Agenda({
 	onChangeMonthYear
 }) {
 	//console.log("RE");
+
+	// OPTIMIZATION: Only refresh calendar elements when dateData changes or itemsThisMonth changes
 
 	return (
 		<View style={styles.calView}>

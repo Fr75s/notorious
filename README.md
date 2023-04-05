@@ -54,8 +54,10 @@ $ npx expo run:android
 ## Currently Implemented
 
 - All pages' basic functionality
+- Calendar Widget
 
 ## Potential Future Additions
 
 - More organized settings page
 - Notifications for notes
+- Calendar Widget Auto-refresh

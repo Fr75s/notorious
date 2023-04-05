@@ -169,15 +169,6 @@ export default function App() {
 							}}
 						/>
 						<Tab.Screen 
-							name="WidgetPreview" 
-							component={RecurScreen} 
-							options = {{
-								tabBarIcon: ({ color, size }) => (
-									<MaterialCommunityIcons name="widgets" color={color} size={size} />
-								)
-							}}
-						/>
-						<Tab.Screen 
 							name="Settings" 
 							component={SettingsScreen} 
 							options = {{

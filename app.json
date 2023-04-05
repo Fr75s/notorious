@@ -34,8 +34,10 @@
             {
               "name": "Calendar",
               "label": "Calendar",
-              "minWidth": "240dp",
-              "minHeight": "300dp",
+              "minWidth": "250dp",
+              "minHeight": "320dp",
+              "targetCellWidth": "4",
+              "targetCellHeight": "5",
               "description": "Notorious Calendar"
             }
           ]

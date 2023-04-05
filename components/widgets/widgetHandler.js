@@ -1,10 +1,11 @@
 import React from 'react';
-import CalendarWidget from './CalendarWidget';
 
 import * as Linking from "expo-linking";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import CalendarWidget from './CalendarWidget';
 
 const nameToWidget = {
-	// Hello will be the **name** with which we will reference our widget.
 	Calendar: CalendarWidget
 };
 
@@ -14,12 +15,17 @@ export default async function widgetTaskHandler(props) {
 
 	switch (props.widgetAction) {
 		case 'WIDGET_ADDED': {
+			AsyncStorage.setItem("@calWidgetYearMonth", new Date().getFullYear() + "-" + new Date().getMonth());
 			props.renderWidget(<Widget />);
 			break;
 		}
 
 		case 'WIDGET_RESIZED': {
-			// Not needed for now
+			AsyncStorage.getItem("@calWidgetYearMonth").then((res) => {
+				const year = Number(res.split("-")[0]);
+				const month = Number(res.split("-")[1]);
+				props.renderWidget(<Widget year={year} month={month}/>)
+			})
 			break;
 		}
 
@@ -36,6 +42,7 @@ export default async function widgetTaskHandler(props) {
 				if (props.clickAction === "RIGHT")
 					currentMonth.setMonth(currentMonth.getMonth() + 1);
 				
+				AsyncStorage.setItem("@calWidgetYearMonth", currentMonth.getFullYear() + "-" + currentMonth.getMonth());
 				props.renderWidget(<Widget year={currentMonth.getFullYear()} month={currentMonth.getMonth()} />);
 			} else if (props.clickAction === "CENTER") { 
 				Linking.openURL(`com.fr75s.notorious://Tasks`);

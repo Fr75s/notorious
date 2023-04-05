@@ -10,6 +10,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { requestWidgetUpdate } from "react-native-android-widget";
+import CalendarWidget from "../components/widgets/CalendarWidget";
+
 import Agenda from "../components/Agenda";
 import { getItemsFromCalendarDate } from '../components/helpers';
 import { globalStyles, globalMenuStyles } from "./../components/GlobalStyles.js";
@@ -179,8 +183,43 @@ export default function CalendarScreen({ navigation, route }) {
 	// Settings
 	settings = useSelector(state => state.settings);
 
-	// Calendar Data
+	// Calendar Data + Update Widget on Calendar Change
+	const [oldItemList, setOldItemList] = useState(null);
+
 	itemList = useSelector((state) => {
+		/*
+		console.log(oldItemList);
+		console.log(JSON.stringify(state.calendar));
+		console.log(oldItemList === JSON.stringify(state.calendar));
+		*/
+
+		console.log("Updating Items");
+		//console.log(oldItemList);
+		//console.log(JSON.stringify(state.calendar));
+		//console.log(oldItemList === JSON.stringify(state.calendar));
+
+		if (!oldItemList || oldItemList !== JSON.stringify(state.calendar)) {
+			console.log("Updating Widget");
+			
+			AsyncStorage.getItem("@calWidgetYearMonth")
+				.then((res) => {
+					const year = Number(res.split("-")[0]);
+					const month = Number(res.split("-")[1]);
+					requestWidgetUpdate({
+						widgetName: "Calendar",
+						renderWidget: () => <CalendarWidget year={year} month={month}/>
+					})
+				})
+				.catch((err) => {
+					requestWidgetUpdate({
+						widgetName: "Calendar",
+						renderWidget: () => <CalendarWidget />
+					})
+				})
+			
+			setOldItemList(JSON.stringify(state.calendar));
+		}
+		
 		return state.calendar;
 	});
 
@@ -207,12 +246,14 @@ export default function CalendarScreen({ navigation, route }) {
 	}
 
 	// Get Stuff
+	// Don't remove this one or your dots will not show on screen focus
 	useEffect(() => {
 		//console.log("naw");
 		//console.log("Called");
 		const focusListener = navigation.addListener("focus", () => {
-			const newSelectedDate = new Date(selectedDate);
-			setSelectedDate(newSelectedDate);
+			//const newSelectedDate = new Date(selectedDate);
+			//setSelectedDate(newSelectedDate);
+			setSelectedDateData(getItemsFromCalendarDate(selectedDate, itemList));
 			setRefresh(!refresh);
 		});
 		return focusListener;
