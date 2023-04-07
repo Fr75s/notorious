@@ -145,12 +145,14 @@ export default function SettingsScreen({ navigation }) {
 
 				<Text style={styles.settingHeader}>Actions</Text>
 
+				{/*
 				<SettingAction 
 					label={"Export Data"}
 					onPress={() => {
 						console.log("ACTION GOES HERE");
 					}}
 				/>
+				*/}
 
 				<SettingAction 
 					label={"Reset Settings"}

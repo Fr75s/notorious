@@ -181,7 +181,34 @@ export default function CalendarScreen({ navigation, route }) {
 	const [refresh, setRefresh] = useState(false);
 
 	// Settings
-	settings = useSelector(state => state.settings);
+	const [oldCalendarVerbose, setOldCalendarVerbose] = useState(false);
+
+	settings = useSelector((state) => {
+
+		if (oldCalendarVerbose !== state.settings["verboseCalendar"]) {
+			console.log("Updating Widget (Setting Changed)");
+			
+			AsyncStorage.getItem("@calWidgetYearMonth")
+				.then((res) => {
+					const year = Number(res.split("-")[0]);
+					const month = Number(res.split("-")[1]);
+					requestWidgetUpdate({
+						widgetName: "Calendar",
+						renderWidget: () => <CalendarWidget year={year} month={month}/>
+					})
+				})
+				.catch((err) => {
+					requestWidgetUpdate({
+						widgetName: "Calendar",
+						renderWidget: () => <CalendarWidget />
+					})
+				})
+			
+			setOldCalendarVerbose(state.settings["verboseCalendar"]);
+		}
+
+		return state.settings;
+	});
 
 	// Calendar Data + Update Widget on Calendar Change
 	const [oldItemList, setOldItemList] = useState(null);

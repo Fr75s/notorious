@@ -121,7 +121,7 @@ export default function CalendarWidget({ year = new Date().getFullYear() , month
 			paddingLeft: 40,
 			paddingRight: 40,
 			borderRadius: 10,
-			backgroundColor: "#26282d"
+			//backgroundColor: "#26282d"
 		},
 
 		dotContainer: {
