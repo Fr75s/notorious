@@ -1,4 +1,4 @@
-<img src="assets/images/logo_dark.png" width="40%" title="Notorious Logo">
+<img src="assets/images/logo_dark.png" width="60%" title="Notorious Logo">
 
 # Notorious
 
@@ -60,4 +60,3 @@ $ npx expo run:android
 
 - More organized settings page
 - Notifications for notes
-- Calendar Widget Auto-refresh
