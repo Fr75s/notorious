@@ -38,7 +38,8 @@
               "minHeight": "320dp",
               "targetCellWidth": "4",
               "targetCellHeight": "5",
-              "description": "Notorious Calendar"
+              "description": "Notorious Calendar",
+              "previewImage": "./assets/images/widget_preview.png"
             }
           ]
         }

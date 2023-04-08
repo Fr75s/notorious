@@ -1,0 +1,160 @@
+/* 
+	Text Styles 
+*/
+
+/* Basic Styles */
+
+.text {
+	font-family: "Inter";
+	color: var(--text);
+
+	margin: 0px;
+}
+
+.title {
+	font-weight: 700;
+	font-size: 36px;
+}
+
+.mid {
+	margin-top: 3em;
+	font-weight: 700;
+	font-size: 24px;
+}
+
+.para {
+	margin-top: 15px;
+	font-weight: 400;
+	font-size: 18px;
+	line-height: 1.5em;
+
+	width: 50vw;
+	max-width: 600px;
+}
+
+/* Modifiers */
+
+figcaption {
+	text-align: center;
+}
+
+a {
+	text-decoration: none;
+}
+
+.block {
+	margin-left: 5vw;
+}
+
+.b {
+	font-weight: 700;
+}
+
+.r {
+	margin-left: 0vw;
+	margin-right: 5vw;
+}
+
+.i {
+	color: var(--background-1);
+}
+
+@media screen and (max-width: 800px) {
+	.block {
+		margin-left: 5vw;
+	}
+	
+	.r {
+		margin-left: 5vw;
+	}
+
+	.para {
+		width: 90vw;
+	}
+}
+
+/* Front Cover Special Formatting */
+
+/* Front Text */
+
+@media screen and (max-width: 800px) {
+	#frontTitle {
+		width: 90vw !important;
+	}
+	#frontSubtitle {
+		width: 90vw !important;
+	}
+}
+
+#frontTitle {
+	font-size: 7vh;
+	font-weight: 900;
+
+	width: 65vw;
+}
+
+#frontSubtitle {
+	font-size: 3vh;
+	font-weight: 400;
+
+	width: 45vw;
+
+	margin-top: 10px;
+	margin-bottom: 35px;
+}
+
+/* Front Button */
+
+@media screen and (prefers-reduced-motion) {
+	#frontButton {
+		box-shadow: 0px 6px 12px #16171a80;
+		transition: none !important;
+	}
+}
+
+@media screen and (max-width: 850px) {
+	#frontButton {
+		box-shadow: 0px 6px 12px #16171a80;
+		transition: none !important;
+	}
+}
+
+#frontButton {
+	font-size: 2vh;
+	font-weight: 900;
+
+	
+	padding: 15px 40px 15px 40px;
+	border-radius: 30px;
+
+	background-color: var(--text);
+	color: var(--background-1);
+
+	box-shadow: 0;
+	transition: box-shadow 400ms;
+}
+
+#frontButton:hover {
+	box-shadow: 0px 6px 12px var(--shadow);
+}
+
+/* Footer Text */
+
+.small {
+	margin-top: 10px;
+	font-weight: 500;
+	font-size: 14px;
+
+	width: 50vw;
+
+	color: var(--background-2);
+}
+
+.footerTitle {
+	font-weight: 700;
+	font-size: 16px;
+
+	margin-bottom: 5px;
+
+	color: var(--background-2);
+}
