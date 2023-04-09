@@ -46,6 +46,7 @@ const initialSettingsState = {
 	"oldTaskThreshold": 7,
 	"notesDrawerOnLeft": false,
 	"verboseCalendar": false,
+	"disableNotificationPermissionPrompt": false,
 };
 
 const initialTasksState = [

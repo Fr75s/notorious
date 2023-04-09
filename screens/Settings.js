@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable, Platform } from "react-native";
 import { nativeApplicationVersion } from "expo-application";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -87,6 +87,18 @@ export default function SettingsScreen({ navigation }) {
 			<ScrollView style={globalStyles.scrollScreen} contentContainerStyle={globalStyles.scrollScreenContent}>
 				<Text style={[globalStyles.h1, {marginBottom: 15}]}>Settings</Text>
 			
+				<Text style={styles.settingHeader}>General</Text>
+
+				<SettingSwitch 
+					label={"Strict Search Filtering"}
+					setting={"strictFiltering"}
+				/>
+
+				<SettingSwitch 
+					label={"Disable Notification Prompt"}
+					setting={"disableNotificationPermissionPrompt"}
+				/>
+
 				<Text style={styles.settingHeader}>Tasks</Text>
 
 				<SettingSwitch 
@@ -99,14 +111,9 @@ export default function SettingsScreen({ navigation }) {
 					setting={"clearOldFinished"}
 				/>
 
-				<SettingSwitch 
-					label={"Strict Search Filtering"}
-					setting={"strictFiltering"}
-				/>
-
 				<View style={[globalStyles.row, { width: "85%", marginTop: 15 }]}>
 					<Text style={[globalStyles.h3, styles.settingLabel]}>
-						Old Task Age Clearing Threshold (days)
+						Old Task Clearing Threshold (days)
 					</Text>
 					<TextInput
 						style={[styles.settingSwitch, styles.settingTextInput]}
@@ -145,14 +152,12 @@ export default function SettingsScreen({ navigation }) {
 
 				<Text style={styles.settingHeader}>Actions</Text>
 
-				{/*
 				<SettingAction 
 					label={"Export Data"}
 					onPress={() => {
 						console.log("ACTION GOES HERE");
 					}}
 				/>
-				*/}
 
 				<SettingAction 
 					label={"Reset Settings"}
@@ -174,6 +179,10 @@ export default function SettingsScreen({ navigation }) {
 							cancelable: true,
 						});
 					}}
+				/>
+
+				<View 
+					style={{ height: 40 }}
 				/>
 				
 			</ScrollView>

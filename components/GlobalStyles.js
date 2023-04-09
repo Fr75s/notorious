@@ -14,8 +14,10 @@ export const globalStyles = StyleSheet.create({
 		backgroundColor: "#1e2126",
 		width: "100%",
 
-		paddingTop: 20,
-		//borderWidth: 2,
+		marginTop: 20,
+		marginBottom: 0,
+
+		//borderWidth: 2
 	},
 
 	modal: {

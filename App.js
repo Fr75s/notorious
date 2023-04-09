@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect, useRef } from "react";
-import { Text, Alert, Easing, Platform, StyleSheet } from "react-native";
+import { Text, Alert, Easing, Platform, StyleSheet, Settings } from "react-native";
 
 import { StatusBar } from "expo-status-bar";
 import * as NavigationBar from "expo-navigation-bar";
@@ -91,25 +91,55 @@ export default function App() {
 					"Meslo-Regular": require("./assets/fonts/Meslo/Meslo-Regular.ttf"),
 				});
 
+				const askForNotifications = async () => {
+					const permissions = await Notifications.getPermissionsAsync();
+					const allowed = permissions.granted || permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+					
+					if (allowed) {
+						return allowed;
+					} else {
+						return await Notifications.requestPermissionsAsync({
+							ios: {
+								allowAlert: true,
+								allowBadge: true,
+								allowSound: true,
+							}
+						})
+					}
+				}
+
 				// Load Settings
 				const loadedSettings = await AsyncStorage.getItem("@settings");
 				if (loadedSettings) {
 					console.log("Preloaded Settings:", loadedSettings);
-					store.dispatch(setSettings(JSON.parse(loadedSettings)));
+					const parsedSettings = JSON.parse(loadedSettings);
+					store.dispatch(setSettings(parsedSettings));
+
+					// Alert user if notifications are disabled
+					console.log("Asking user for notifications (if necessary)");
+					if (!Object.keys(parsedSettings).includes("disableNotificationPermissionPrompt") || !parsedSettings["disableNotificationPermissionPrompt"]) {
+						askForNotifications();
+					}
+				} else {
+					console.log("Couldn't load settings, doing notification prompt");
+					askForNotifications();
 				}
 
+				// Load Tasks
 				const loadedTasks = await AsyncStorage.getItem("@taskData");
 				if (loadedTasks) {
 					console.log("Preloaded Tasks:", loadedTasks);
 					store.dispatch(setTaskData(JSON.parse(loadedTasks)));
 				}
 
+				// Load Notes
 				const loadedNotes = await AsyncStorage.getItem("@notes");
 				if (loadedNotes) {
 					console.log("Preloaded Notes:", loadedNotes);
 					store.dispatch(setNotes(JSON.parse(loadedNotes)));
 				}
 
+				// Load Calendar Data
 				const loadedCalendar = await AsyncStorage.getItem("@calendar");
 				if (loadedCalendar) {
 					console.log("Preloaded Calendar");
