@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
-import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable, Platform } from "react-native";
+import { View, Text, Alert, TextInput, Switch, StyleSheet, ScrollView, Pressable } from "react-native";
 import { nativeApplicationVersion } from "expo-application";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useIsFocused } from "@react-navigation/native";
+import DocumentPicker from "react-native-document-picker";
+import * as FileSystem from "expo-file-system";
+import * as Notifications from "expo-notifications";
 
 import { useSelector } from "react-redux";
 import store from "../components/redux/store"
 import { changeSetting, resetSettings, setSettings } from "../components/redux/SettingActions";
+import { setTaskData } from "../components/redux/TaskActions";
+import { setNotes } from "../components/redux/NoteActions";
+import { setCalendar } from "../components/redux/CalendarActions";
 
 import { globalStyles } from "./../components/GlobalStyles.js";
 import FAB from "./../components/FAB.js"
@@ -153,9 +159,58 @@ export default function SettingsScreen({ navigation }) {
 				<Text style={styles.settingHeader}>Actions</Text>
 
 				<SettingAction 
+					label={"Import Data"}
+					onPress={() => {
+						const selectAndRead = async () => {
+							const path = await DocumentPicker.pickSingle();
+							if (path && path.uri) {
+								if (path.uri.slice(-4) === "json") {
+									const fileStringContents = await FileSystem.readAsStringAsync(path.uri);
+									console.log(fileStringContents);
+									const fileContent = JSON.parse(fileStringContents);
+
+									const fileContentKeys = Object.keys(fileContent);
+								
+									const validFile = fileContentKeys.includes("settings")
+										&& fileContentKeys.includes("tasks")
+										&& fileContentKeys.includes("notes")
+										&& fileContentKeys.includes("calendar")
+										&& fileContent["tasks"].length === 3;
+
+									if (validFile) {
+										Notifications.cancelAllScheduledNotificationsAsync();
+
+										store.dispatch(setSettings(fileContent.settings));
+										store.dispatch(setTaskData(fileContent.tasks));
+										store.dispatch(setNotes(fileContent.notes));
+										store.dispatch(setCalendar(fileContent.calendar));
+									}
+								}
+							}
+						}
+
+						console.log("Importing Data...");
+						selectAndRead();
+					}}
+				/>
+
+				<SettingAction 
 					label={"Export Data"}
 					onPress={() => {
-						console.log("ACTION GOES HERE");
+						const selectAndSave = async () => {
+							const path = await DocumentPicker.pickDirectory();
+							if (path && path.uri) {
+								const newFileName = "notorious-" + new Date().toISOString();
+								const newFileURI = await FileSystem.StorageAccessFramework.createFileAsync(path.uri, newFileName, "application/json");
+								const storeContents = store.getState();
+								await FileSystem.writeAsStringAsync(newFileURI, JSON.stringify(storeContents));
+								
+								console.log("File Written.");
+							}
+						}
+
+						console.log("Exporting Data...");
+						selectAndSave();
 					}}
 				/>
 
