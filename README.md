@@ -8,6 +8,8 @@ A simple note-taking app built using React Native. An app I made to get familiar
 
 This github page provides the source code for the app. [If you want to download the app, go here.](https://github.com/Fr75s/notorious/releases) [If you want more information about the app, go here.](https://fr75s.github.io/notorious/)
 
+[View the full Changelog for the app here.](https://github.com/Fr75s/notorious/blob/main/CHANGELOG.md)
+
 ***
 
 ## Development Setup & Build
@@ -48,15 +50,3 @@ $ npx expo prebuild
 $ cd android
 $ ./gradlew :app:assembleRelease
 ```
-
-***
-
-## Currently Implemented
-
-- All pages' basic functionality
-- Calendar Widget
-
-## Potential Future Additions
-
-- More organized settings page
-- Notifications for notes
