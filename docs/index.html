@@ -12,10 +12,29 @@
 		<main>
 			<div id="header" class="header">
 				<img
-					class="headerLogo"
+					class="dmi headerLogo"
 					src="assets/moving_header_logo.png" 
 					alt="Notorious Logo"
 				/>
+
+				<img
+					class="dmi off headerLogo"
+					src="assets/moving_header_logo_darkmode.png" 
+					alt="Notorious Logo"
+				/>
+
+				<label
+					class="off darkSwitchContainer"
+				>
+					<input 
+						type="checkbox"
+						class="darkSwitch"
+						onchange="toggleDarkMode(this.checked);"
+					/>
+					<span
+						class="darkSwitchBack"
+					></span>
+				</label>
 
 				<div id="movingHeaderMenu" class="headerMenu open">
 					<a href="index.html" class="text">Home</a>
@@ -24,8 +43,15 @@
 
 					<img 
 						onclick="onHeaderMenuClick('movingHeaderMenu')" 
-						class="headerMenuIcon" 
+						class="dmi headerMenuIcon" 
 						src="assets/icons/menu.svg"
+						alt="Menu Button"
+					/>
+
+					<img 
+						onclick="onHeaderMenuClick('movingHeaderMenu')" 
+						class="dmi off headerMenuIcon" 
+						src="assets/icons/menu_darkmode.svg"
 						alt="Menu Button"
 					/>
 				</div>
@@ -35,10 +61,29 @@
 
 				<div class="fixedHeader">
 					<img
-						class="headerLogo"
+						class="dmi headerLogo"
 						src="assets/fixed_header_logo.png" 
 						alt="Notorious Logo"
 					/>
+
+					<img
+						class="dmi off headerLogo"
+						src="assets/fixed_header_logo_darkmode.png" 
+						alt="Notorious Logo"
+					/>
+
+					<label
+						class="off darkSwitchContainer"
+					>
+						<input 
+							type="checkbox"
+							class="darkSwitch"
+							onchange="toggleDarkMode(this.checked);"
+						/>
+						<span
+							class="darkSwitchBack"
+						></span>
+					</label>
 
 					<div id="fixedHeaderMenu" class="headerMenu open">
 						<a href="index.html" class="text">Home</a>
@@ -47,8 +92,15 @@
 
 						<img 
 							onclick="onHeaderMenuClick('fixedHeaderMenu')" 
-							class="headerMenuIcon" 
+							class="dmi headerMenuIcon" 
 							src="assets/icons/menu.svg" 
+							alt="Menu Button"
+						/>
+
+						<img 
+							onclick="onHeaderMenuClick('fixedHeaderMenu')" 
+							class="dmi off headerMenuIcon" 
+							src="assets/icons/menu_darkmode.svg" 
 							alt="Menu Button"
 						/>
 					</div>
@@ -86,7 +138,14 @@
 
 				<div class="coverImage">
 					<img
+						class="dmi"
 						src="assets/home/all_together.svg"
+						alt="A scattered group of icons that correspond to pages of the app"
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/all_together_darkmode.svg"
 						alt="A scattered group of icons that correspond to pages of the app"
 					/>
 				</div>
@@ -97,7 +156,14 @@
 
 				<div class="coverImage l">
 					<img
+						class="dmi"
 						src="assets/home/advanced.svg"
+						alt="A row of icons, which are an outline of a circle, a half-filled circle, and a filled circle."
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/advanced_darkmode.svg"
 						alt="A row of icons, which are an outline of a circle, a half-filled circle, and a filled circle."
 					/>
 				</div>
@@ -117,7 +183,14 @@
 
 				<div class="coverImage responsiveCoverImage">
 					<img
+						class="dmi"
 						src="assets/home/advanced.svg"
+						alt="A row of icons, which are an outline of a circle, a half-filled circle, and a filled circle."
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/advanced_darkmode.svg"
 						alt="A row of icons, which are an outline of a circle, a half-filled circle, and a filled circle."
 					/>
 				</div>
@@ -141,7 +214,14 @@
 
 				<div class="coverImage">
 					<img
+						class="dmi"
 						src="assets/home/widget.svg"
+						alt="A calendar from the app"
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/widget_darkmode.svg"
 						alt="A calendar from the app"
 					/>
 				</div>
@@ -152,7 +232,14 @@
 
 				<div class="coverImage l">
 					<img
+						class="dmi"
 						src="assets/home/oss.svg"
+						alt="An icon for the open source initiative."
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/oss_darkmode.svg"
 						alt="An icon for the open source initiative."
 					/>
 				</div>
@@ -165,7 +252,7 @@
 	
 					<p class="text r para block">
 						The source code for Notorious is available on
-						<a href="https://github.com/Fr75s/notorious">the Github page</a>
+						<a class="lnk" href="https://github.com/Fr75s/notorious">the Github page</a>
 						 and is licensed under the GPLv3 License.
 					</p>
 
@@ -173,7 +260,14 @@
 
 				<div class="coverImage responsiveCoverImage">
 					<img
+						class="dmi"
 						src="assets/home/oss.svg"
+						alt="An icon for the open source initiative."
+					/>
+
+					<img
+						class="dmi off"
+						src="assets/home/oss_darkmode.svg"
 						alt="An icon for the open source initiative."
 					/>
 				</div>

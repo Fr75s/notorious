@@ -12,10 +12,29 @@
 		<main>
 			<div id="header" class="header">
 				<img
-					class="headerLogo"
+					class="dmi headerLogo"
 					src="assets/moving_header_logo.png" 
 					alt="Notorious Logo"
 				/>
+
+				<img
+					class="dmi off headerLogo"
+					src="assets/moving_header_logo_darkmode.png" 
+					alt="Notorious Logo"
+				/>
+
+				<label
+					class="off darkSwitchContainer"
+				>
+					<input 
+						type="checkbox"
+						class="darkSwitch"
+						onchange="toggleDarkMode(this.checked);"
+					/>
+					<span
+						class="darkSwitchBack"
+					></span>
+				</label>
 
 				<div id="movingHeaderMenu" class="headerMenu open">
 					<a href="index.html" class="text">Home</a>
@@ -24,8 +43,15 @@
 
 					<img 
 						onclick="onHeaderMenuClick('movingHeaderMenu')" 
-						class="headerMenuIcon" 
+						class="dmi headerMenuIcon" 
 						src="assets/icons/menu.svg"
+						alt="Menu Button"
+					/>
+
+					<img 
+						onclick="onHeaderMenuClick('movingHeaderMenu')" 
+						class="dmi off headerMenuIcon" 
+						src="assets/icons/menu_darkmode.svg"
 						alt="Menu Button"
 					/>
 				</div>
@@ -33,10 +59,29 @@
 
 			<div class="fixedHeader">
 				<img
-					class="headerLogo"
+					class="dmi headerLogo"
 					src="assets/fixed_header_logo.png" 
 					alt="Notorious Logo"
 				/>
+
+				<img
+					class="dmi off headerLogo"
+					src="assets/fixed_header_logo_darkmode.png" 
+					alt="Notorious Logo"
+				/>
+
+				<label
+					class="off darkSwitchContainer"
+				>
+					<input 
+						type="checkbox"
+						class="darkSwitch"
+						onchange="toggleDarkMode(this.checked);"
+					/>
+					<span
+						class="darkSwitchBack"
+					></span>
+				</label>
 
 				<div id="fixedHeaderMenu" class="headerMenu open">
 					<a href="index.html" class="text">Home</a>
@@ -45,8 +90,15 @@
 
 					<img 
 						onclick="onHeaderMenuClick('fixedHeaderMenu')" 
-						class="headerMenuIcon" 
+						class="dmi headerMenuIcon" 
 						src="assets/icons/menu.svg" 
+						alt="Menu Button"
+					/>
+
+					<img 
+						onclick="onHeaderMenuClick('fixedHeaderMenu')" 
+						class="dmi off headerMenuIcon" 
+						src="assets/icons/menu_darkmode.svg" 
 						alt="Menu Button"
 					/>
 				</div>
@@ -89,7 +141,7 @@
 
 					<p class="text para block">
 						<span class="b">Markdown</span><br>
-						You can use <a href="https://en.wikipedia.org/wiki/Markdown">Markdown Formatting</a> in your notes. Most markdown syntax is supported.
+						You can use <a class="lnk" href="https://en.wikipedia.org/wiki/Markdown">Markdown Formatting</a> in your notes. Most markdown syntax is supported.
 					</p>
 
 					<p class="text para block">
@@ -162,7 +214,7 @@
 						<figure class="galleryImg">
 							<img
 								class="galleryImg s"
-								src="assets/screenshots/showcase_screenshot_2.png"
+								src="assets/screenshots/showcase_screenshot_3.png"
 								alt="A screenshot of the calendar page."
 							/>
 							<figcaption class="text para">Calendar Page</figcaption>

@@ -2,12 +2,28 @@
 @import "text.css";
 @import "ui.css";
 
-:root {
+html {
 	--background-1: #f2f6ff;
 	--background-2: #deeaff;
 	--text: #16171a;
 	--text-2: #26282d;
 	--shadow: #16171a80;
+	--cover-grad-1: #74aaff;
+	--cover-grad-2: #7474ff;
+
+	transition: all 400ms ease 0s;
+}
+
+html.dark {
+	--background-1: #16171a;
+	--background-2: #26282d;
+	--text: #f2f6ff;
+	--text-2: #deeaff;
+	--shadow: #000000;
+	--cover-grad-1: #505e73;
+	--cover-grad-2: #505073;
+
+	transition: all 400ms ease 0s;
 }
 
 body {

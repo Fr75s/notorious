@@ -42,6 +42,10 @@ a {
 	text-decoration: none;
 }
 
+.lnk:link, .lnk:visited {
+	color: #74aaff;
+}
+
 .block {
 	margin-left: 5vw;
 }
@@ -135,7 +139,7 @@ a {
 }
 
 #frontButton:hover {
-	box-shadow: 0px 6px 12px var(--shadow);
+	box-shadow: 0px 6px 12px #16171a80;
 }
 
 /* Footer Text */
@@ -147,7 +151,7 @@ a {
 
 	width: 50vw;
 
-	color: var(--background-2);
+	color: #deeaff;
 }
 
 .footerTitle {
@@ -156,5 +160,5 @@ a {
 
 	margin-bottom: 5px;
 
-	color: var(--background-2);
+	color: #deeaff;
 }

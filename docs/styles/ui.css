@@ -2,6 +2,12 @@
 	UI Styles 
 */
 
+/* Dark Mode Images */
+
+.dmi {
+	display: block;
+}
+
 /* Covers */
 
 /* Front Cover */
@@ -13,12 +19,10 @@
 
 	overflow: hidden;
 
-	background: linear-gradient(#74aaff, #7474ff);
+	background: linear-gradient(var(--cover-grad-1), var(--cover-grad-2));
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;
-
-	
 }
 
 @media screen and (max-width: 800px) {
@@ -169,7 +173,7 @@
 }
 
 .bgi {
-	background-color: var(--text);
+	background-color: #16171a;
 }
 
 /* Footers */
@@ -207,7 +211,7 @@
 
 	opacity: 0;
 	pointer-events: none;
-	transition: 500ms;
+	transition: opacity 500ms;
 
 	background-color: var(--background-1);
 }
@@ -286,6 +290,64 @@
 	height: auto;
 
 	padding: 15px;
+}
+
+/* Dark Mode Toggle */
+
+.darkSwitchContainer {
+	display: flex;
+	align-items: top;
+
+	margin-top: calc((60px - 30px * var(--scale)) / 2);
+	margin-left: 20px;
+	--scale: 0.75;
+}
+
+.darkSwitch {
+	display: none;
+}
+
+.darkSwitchBack {
+	display: block;
+
+	width: calc(60px * var(--scale));
+	height: calc(30px * var(--scale));
+
+	border-radius: calc(15px * var(--scale));
+
+	background-color: var(--text);
+}
+
+@media screen and (prefers-reduced-motion) {
+	.darkSwitchBack:before {
+		transition: 0ms !important;
+	}
+}
+
+.darkSwitchBack:before {
+	display: block;
+	position: relative;
+	content: "";
+	
+	left: calc(5px * var(--scale));
+	top: calc(5px * var(--scale));
+
+	width: calc(20px * var(--scale));
+	height: calc(20px * var(--scale));
+
+	border-radius: calc(10px * var(--scale));
+
+	background-color: var(--background-1);
+
+	transition: transform 400ms;
+}
+
+.darkSwitch:checked + .darkSwitchBack:before {
+	transform: translateX(calc(30px * var(--scale)));
+}
+
+.off {
+	display: none !important;
 }
 
 /* Gallery */
