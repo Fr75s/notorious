@@ -8,7 +8,7 @@ A simple note-taking app built using React Native. An app I made to get familiar
 
 This github page provides the source code for the app. [If you want to download the app, go here.](https://github.com/Fr75s/notorious/releases) [If you want more information about the app, go here.](https://fr75s.github.io/notorious/)
 
-[View the full Changelog for the app here.](https://github.com/Fr75s/notorious/blob/main/CHANGELOG.md)
+[View the full Changelog for the app here.](https://github.com/Fr75s/notorious/blob/main/Changelog.md)
 
 ***
 
