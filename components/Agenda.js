@@ -6,7 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle } from "react-native-reanima
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
-import { getItemsFromCalendarDate } from './helpers';
+import { getItemsFromCalendarDate, getTaskFromID } from './helpers';
 import { globalStyles } from "./GlobalStyles";
 import store from "./redux/store";
 
@@ -162,6 +162,8 @@ function DaysInMonth({
 }
 
 export default function Agenda({
+	navigation,
+
 	dateData,
 	itemsThisMonth,
 	refresh,
@@ -253,7 +255,27 @@ export default function Agenda({
 				data={selectedDateData}
 				style={{ width: "100%" }}
 				renderItem={({item}) => (
-					<View style={styles.agendaItem}>
+					<Pressable 
+						style={styles.agendaItem}
+						onPress={() => {
+							if (item.type === "task") {
+								const tasks = store.getState().tasks;
+								const taskID = "@" + item.title + ";" + item.creationDate;
+
+								const taskIdx = getTaskFromID(tasks, taskID);
+								const taskData = tasks[taskIdx[0]].data[taskIdx[1]];
+
+								console.log(taskID, taskData);
+
+								navigation.navigate("NewTask", {
+									mode: "modify",
+									task: taskData,
+									taskSection: taskIdx[0],
+									returnTo: "calendar"
+								});
+							}
+						}}
+					>
 						<View style={{ flex: 3 }}>
 							<Text style={globalStyles.h1} numberOfLines={1}>
 								{item.title}
@@ -272,7 +294,7 @@ export default function Agenda({
 								{item.time}
 							</Text>
 						</View>
-					</View>
+					</Pressable>
 				)}
 			/>
 		</View>

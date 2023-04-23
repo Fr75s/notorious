@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback } from "react";
-import { View, Text, Image, Alert, Switch, TextInput, Pressable, Vibration, StyleSheet, ScrollView, SectionList } from "react-native";
+import { View, Text, Image, Alert, Switch, TextInput, Pressable, Vibration, StyleSheet, ScrollView, SectionList, BackHandler } from "react-native";
 
 import { createStackNavigator } from "@react-navigation/stack";
 import { useIsFocused, useFocusEffect } from "@react-navigation/native";
@@ -264,9 +264,11 @@ async function createTaskNotification(task) {
 
 			const calItem = {
 				id: task.id,
+				type: "task",
 				title: task.name,
 				body: task.desc,
 				time: calTime,
+				creationDate: task.creationDate.toLocaleString(),
 				triggerData: notificationTrigger
 			}
 			store.dispatch(calActions.addCalendarItem(calItem, notificationType, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()));
@@ -683,6 +685,21 @@ function NewTask({ route, navigation }) {
 		notifDate.setMinutes(0, 0, 0);
 	}
 
+	// Navigation Handling
+	const returnToScreen = () => {
+		if (route.params.hasOwnProperty("returnTo")) {
+			if (route.params.returnTo === "calendar") {
+				navigation.navigate("Calendar", {
+					year: notifDate.getFullYear(),
+					month: notifDate.getMonth(),
+					day: notifDate.getDate()
+				});
+			}
+		} else {
+			navigation.goBack();
+		}
+	}
+
 	// Notification Toggle Initialization
 	const [notifEnabled, setNotifEnabled] = React.useState(mode === "addNew" ? true : taskMod.notify);
 	const [notifInterval, setNotifInterval] = React.useState(mode === "addNew" ? null : taskMod.repeatInterval);
@@ -833,7 +850,7 @@ function NewTask({ route, navigation }) {
 							
 							console.log("Added Task with Name", taskName);
 
-							navigation.navigate("TasksMain");
+							returnToScreen();
 						} else if (mode === "modify") {
 							// Get the index of the task in the data list it corresponds to
 							console.log("-------");
@@ -863,7 +880,7 @@ function NewTask({ route, navigation }) {
 							saveTaskData();
 							console.log("Modifications applied to task.");
 
-							navigation.navigate("TasksMain");
+							returnToScreen();
 						}
 					}
 				}}

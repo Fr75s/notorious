@@ -173,6 +173,8 @@ function NoteListDrawer(props) {
 	let notebooks = Object.keys(notes);
 
 	const [createNotebookDialog, setCreateNotebookDialog] = useState(false);
+	const [renameNotebookDialog, setRenameNotebookDialog] = useState(false);
+	const [renameNotebookOriginal, setRenameNotebookOriginal] = useState("");
 
 	return (
 		<View style={globalStyles.screen}>
@@ -209,8 +211,44 @@ function NoteListDrawer(props) {
 				}}
 			/>
 
+			<Dialog 
+				type={"textInput"}
+				title={"Rename Notebook"}
+				details={""}
+				inputPlaceholder={"New Name"}
+				visible={renameNotebookDialog}
+
+				action1={(value) => {
+					console.log(value);
+
+					if (renameNotebookOriginal) {
+						let validName = true;
+						for (let i = 0; i < defaultNotebookSet.length; i++) {
+							if (defaultNotebookSet[i].toLowerCase() === value.toLowerCase())
+								validName = false;
+						}
+						
+						if (validName) {
+							store.dispatch(noteActions.createNotebook(value));
+							for (let i = 0; i < notes[notebook].length; i++) {
+								store.dispatch(noteActions.changeNotebook(notes[renameNotebookOriginal][i].id, renameNotebookOriginal, value));
+							}
+							store.dispatch(noteActions.changeSelectedNotebook(value));
+							store.dispatch(noteActions.removeNotebook(renameNotebookOriginal));
+							saveNotes();
+							console.log("Successfully Renamed Notebook");
+						}
+					}
+				}}
+				action2={() => {}}
+				dismissAction={() => {
+					setRenameNotebookDialog(false);
+				}}
+			/>	
+
 			<FlatList 
 				style={styles.searchItemsBox}
+				showsVerticalScrollIndicator={false}
 				data={notebooks}
 				renderItem={({item}) => 
 					<NotebookView 
@@ -218,6 +256,10 @@ function NoteListDrawer(props) {
 						pressAction={() => {
 							store.dispatch(noteActions.changeSelectedNotebook(item));
 							props.navigation.closeDrawer();
+						}}
+						renameAction={(notebook) => {
+							setRenameNotebookOriginal(notebook);
+							setRenameNotebookDialog(true);
 						}}
 						deleteAction={() => {
 							store.dispatch(noteActions.removeNotebook(item));
@@ -339,6 +381,7 @@ function NoteListScreen({ route, navigation }) {
 						}
 						
 						if (validName) {
+							store.dispatch(noteActions.createNotebook(value));
 							for (let i = 0; i < notes[notebook].length; i++) {
 								store.dispatch(noteActions.changeNotebook(notes[notebook][i].id, notebook, value));
 							}
@@ -389,6 +432,7 @@ function NoteListScreen({ route, navigation }) {
 											
 											AsyncStorage.removeItem("@notes");
 											store.dispatch(noteActions.resetNotes());
+											store.dispatch(noteActions.changeSelectedNotebook("Standard"));
 											saveNotes();
 	
 											console.log("Cleared.");
@@ -405,6 +449,7 @@ function NoteListScreen({ route, navigation }) {
 
 			<FlatList 
 				style={styles.searchItemsBox}
+				showsVerticalScrollIndicator={false}
 				data={notes[notebook]}
 				renderItem={({item}) => 
 					<NoteView
@@ -483,6 +528,7 @@ function NoteListScreen({ route, navigation }) {
 				onPress={() => {
 					navigation.navigate("ViewNote", {
 						mode: "new",
+						notebook: notebook
 					});
 				}}
 			/> : null}
@@ -550,7 +596,7 @@ function ViewNoteScreen({ route, navigation }) {
 
 	const [creationDate, setCreationDate] = useState(noteMode === "new" ? Date() : passedNote.creationDate);
 
-	const notebook = (noteMode === "new" ? "standard" : route.params.notebook);
+	const notebook = route.params.notebook;
 
 	const modificationDate = new Date().toString();
 
@@ -577,9 +623,9 @@ function ViewNoteScreen({ route, navigation }) {
 		console.log(noteObj);
 
 		if (noteMode === "new") {
-			store.dispatch(noteActions.addNote(noteObj));
+			store.dispatch(noteActions.addNote(noteObj, notebook));
 			saveNotes();
-			console.log("Added Note", noteID);
+			console.log("Added Note", noteID, "to notebook", notebook);
 		} else {
 			store.dispatch(noteActions.modifyNote(noteID, notebook, noteObj));
 			saveNotes();
@@ -834,6 +880,7 @@ function SearchNoteScreen({ route, navigation }) {
 			{/*<Text style={globalStyles.smallText}>{searchFilter}</Text>*/}
 
 			<FlatList 
+				showsVerticalScrollIndicator={false}
 				style={styles.searchItemsBox}
 				data={noteList}
 				renderItem={({item}) => 
@@ -965,6 +1012,7 @@ function SelectListedItemsScreen({ route, navigation }) {
 
 			<FlatList 
 				style={styles.searchItemsBox}
+				showsVerticalScrollIndicator={false}
 				data={items}
 				ListHeaderComponent={ 
 					newItems ? <View style={[globalStyles.row, { flex: 1, marginBottom: 10 }]}>

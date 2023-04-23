@@ -322,6 +322,7 @@ export default function CalendarScreen({ navigation, route }) {
 			</View>
 
 			<Agenda 
+				navigation={navigation}
 				dateData={thisDate}
 				refresh={refresh}
 				

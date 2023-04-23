@@ -14,10 +14,11 @@ export const setNotes = (noteData) => ({
 })
 
 export const ADD_NOTE = "ADD_NOTE";
-export const addNote = (noteObj) => ({
+export const addNote = (noteObj, notebook) => ({
 	type: ADD_NOTE,
 	payload: {
-		note: noteObj
+		note: noteObj,
+		notebook: notebook
 	}
 })
 

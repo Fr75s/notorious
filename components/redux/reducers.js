@@ -268,10 +268,10 @@ const noteReducer = (state = initialNotesState, action) => {
 			};
 		}
 		case ADD_NOTE: {
-			const { note } = action.payload;
+			const { note, notebook } = action.payload;
 			
 			let newNotes = state;
-			newNotes["Standard"].unshift(note);
+			newNotes[notebook].unshift(note);
 
 			return { ...newNotes };
 		}

@@ -2,9 +2,19 @@
 
 export function taskIndexFromID(taskData, taskSectionIndex, taskID) {
 	for (let i = 0; i < taskData[taskSectionIndex].data.length; i++) {
-		//console.log("CHECKING", taskData[taskSectionIndex].data[i].id, "VS", taskID);
+		console.log("CHECKING", taskData[taskSectionIndex].data[i].id, "VS", taskID);
 		if (taskData[taskSectionIndex].data[i].id === taskID) {
 			return i;
+		}
+	}
+}
+
+export function getTaskFromID(taskData, taskID) {
+	const sections = ["unfinished", "partial", "finished"];
+	for (let i = 0; i < sections.length; i++) {
+		const indexInSection = taskIndexFromID(taskData, i, taskID);
+		if (indexInSection !== null) {
+			return [i, indexInSection];
 		}
 	}
 }

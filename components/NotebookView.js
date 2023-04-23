@@ -4,7 +4,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { globalMenuDestructiveText, globalMenuStyles, globalStyles } from "./GlobalStyles";
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 
-export default function NotebookView({ notebook, pressAction, deleteAction }) {
+export default function NotebookView({ notebook, pressAction, renameAction, deleteAction }) {
 	const iconSize = 30;
 	const defaultNotebooks = ["Standard", "Archived", "Deleted"]
 
@@ -34,6 +34,10 @@ export default function NotebookView({ notebook, pressAction, deleteAction }) {
 						/>
 					</MenuTrigger>
 					<MenuOptions customStyles={globalMenuStyles}>
+						<MenuOption 
+							text={"Rename Notebook"}
+							onSelect={() => { renameAction(notebook) }}
+						/>
 						<MenuOption 
 							text={"Delete Notebook"}
 							customStyles={globalMenuDestructiveText}

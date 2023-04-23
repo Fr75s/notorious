@@ -127,7 +127,8 @@ export default function CalendarWidget({ year = new Date().getFullYear() , month
 		dotContainer: {
 			flexDirection: "row",
 			alignItems: "center",
-			gap: 2,
+
+			flexGap: 2,
 
 			height: 5,
 			marginTop: 2,
