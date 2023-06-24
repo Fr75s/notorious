@@ -600,7 +600,7 @@ function ViewNoteScreen({ route, navigation }) {
 
 	const modificationDate = new Date().toString();
 
-	const saveLocalNote = () => {
+	const saveLocalNote = (passedLocalNoteContent = null) => {
 		console.log("Saving this note...");
 
 		const noteID = "@" + localNoteName + ";" + creationDate;
@@ -610,7 +610,7 @@ function ViewNoteScreen({ route, navigation }) {
 		const noteObj = {
 			id: noteID,
 			name: localNoteName,
-			content: localNoteContent,
+			content: passedLocalNoteContent || localNoteContent,
 
 			tags: localNoteTags,
 			accentColor: realNoteColor,
@@ -729,7 +729,10 @@ function ViewNoteScreen({ route, navigation }) {
 					autoFocus={noteMode !== "new"}
 					multiline={true}
 
-					onChangeText={setLocalNoteContent}
+					onChangeText={(text) => {
+						setLocalNoteContent(text);
+						saveLocalNote(text);
+					}}
 					value={localNoteContent}
 
 					placeholder={"Write a note"}
@@ -737,7 +740,7 @@ function ViewNoteScreen({ route, navigation }) {
 				<Text style={styles.smallInfo}>
 					Note created on {new Date(creationDate).toLocaleDateString()} at {new Date(creationDate).toLocaleTimeString()}
 					{"\n"}Note modified on {new Date(modificationDate).toLocaleDateString()} at {new Date(modificationDate).toLocaleTimeString()}
-					{"\n\n"}Tags: {localNoteTags}
+					{"\n\n\n"}Tags: {localNoteTags}
 					{"\n"}Color: {localNoteColor}
 					{"\n"}Attached Tasks: {localNoteTasks}
 				</Text>
@@ -753,6 +756,16 @@ function ViewNoteScreen({ route, navigation }) {
 			{ !editMode ? <Markdown
 				value={localNoteContent}
 				styles={globalMDStyles}
+
+				flatListProps={{
+					ListFooterComponent: <Text style={styles.smallInfo}>
+						Note created on {new Date(creationDate).toLocaleDateString()} at {new Date(creationDate).toLocaleTimeString()}
+						{"\n"}Note modified on {new Date(modificationDate).toLocaleDateString()} at {new Date(modificationDate).toLocaleTimeString()}
+						{"\n\n\n"}Tags: {localNoteTags}
+						{"\n"}Color: {localNoteColor}
+						{"\n"}Attached Tasks: {localNoteTasks}
+					</Text>
+				}}
 			/> : null}
 
 			<FAB 

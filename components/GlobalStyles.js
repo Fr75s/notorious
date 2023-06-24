@@ -103,7 +103,7 @@ export const globalMenuDestructiveText = {
 export const globalMDStyles = {
 	container: {
 		width: "85%",
-		backgroundColor: "#00000000"
+		backgroundColor: "#00000000",
 	},
 
 	codespan: {

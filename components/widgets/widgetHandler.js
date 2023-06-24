@@ -29,6 +29,15 @@ export default async function widgetTaskHandler(props) {
 			break;
 		}
 
+		case 'WIDGET_UPDATE': {
+			AsyncStorage.getItem("@calWidgetYearMonth").then((res) => {
+				const year = Number(res.split("-")[0]);
+				const month = Number(res.split("-")[1]);
+				props.renderWidget(<Widget year={year} month={month}/>)
+			})
+			break;
+		}
+
 		case 'WIDGET_CLICK': {
 			//const newUpper = props.clickAction === "upper" ? "That tickles :)" : "I WANT ATTENTION";
 			//props.renderWidget(<Widget {...widgetInfo}/>)
