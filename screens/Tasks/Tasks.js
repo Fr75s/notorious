@@ -1,10 +1,16 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import { View, Text, Image, Alert, Switch, TextInput, Pressable, Vibration, StyleSheet, ScrollView, SectionList, BackHandler } from "react-native";
+//
+// Task Pages
+//
 
+// React Native Stuff
+import React, { useEffect, useRef } from "react";
+import { View, Text, Image, Alert, Switch, TextInput, Pressable, Vibration, ScrollView, SectionList } from "react-native";
+
+// Navigation & Gestures
 import { createStackNavigator } from "@react-navigation/stack";
-import { useIsFocused, useFocusEffect } from "@react-navigation/native";
 import "react-native-gesture-handler";
 
+// Other Modules
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
@@ -12,7 +18,8 @@ import { useSelector } from "react-redux";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
 
-import store from "../components/redux/store";
+// Redux Actions & Store
+import store from "../../components/redux/store";
 import {
 	resetTasks,
 	setTaskData,
@@ -21,20 +28,40 @@ import {
 	moveTask,
 	modifyTask,
 	changeTaskSection,
-} from "../components/redux/TaskActions";
-import * as calActions from "../components/redux/CalendarActions";
-import { globalMenuStyles, globalStyles, globalMenuDestructiveText } from "./../components/GlobalStyles.js";
-import TaskView from "./../components/TaskView.js";
-import FAB from "./../components/FAB.js";
+} from "../../components/redux/TaskActions";
+import * as calActions from "../../components/redux/CalendarActions";
 
-const LogoImage = require("../assets/images/logo_dark.png");
-const NoTaskImage = require("../assets/images/nothingtodo.png");
+// Helper Functions
+import {
+	searchFilterCheck
+} from "../../components/helpers.js";
+import {
+	createTaskNotification,
+	cancelTaskNotification,
+	createCalendarItem,
+	removeCalendarItem
+} from "./taskNotificationCalendarHelpers.js";
+import {
+	repeatIntervalToType,
+	getSectionIndex,
+	getNotifIntervalTitle,
+	formatDateString
+} from "./taskHelpers.js";
 
-// Settings
+// Styling
+import { globalMenuStyles, globalStyles, globalMenuDestructiveText } from "../../components/GlobalStyles.js";
+import styles from "./taskStyles.js";
 
+// Other Components
+import TaskView from "../../components/TaskView.js";
+import FAB from "../../components/FAB.js";
+
+// Static Assets
+const LogoImage = require("../../assets/images/logo_dark.png");
+const NoTaskImage = require("../../assets/images/nothingtodo.png");
+
+// Prepare settings
 let settings = {}
-
-// Tasks
 
 /*
 Task Properties:
@@ -49,7 +76,7 @@ repeatInterval: Time until this task gets notified again
 notifyDate: Time when the user should be notified
 */
 
-let tasks = []
+let tasks = [];
 
 /* Index Reference:
  * 0: Unfinished
@@ -57,15 +84,8 @@ let tasks = []
  * 2: Finished
  */
 
-const repeatIntervalToType = {
-	"5sec": "date",
-	"day": "daily",
-	"week": "weekly",
-	"year": "yearly"
-}
-
 // Check if no tasks are present
-function emptyTasks() {
+function isTasksEmpty() {
 	const noUnfinished = tasks[0].data.length === 0;
 	const noPartial = tasks[1].data.length === 0;
 	const noFinished = tasks[2].data.length === 0;
@@ -73,31 +93,7 @@ function emptyTasks() {
 	return noUnfinished && noPartial && noFinished;
 }
 
-// Fetch Section Index from Name
-function getSectionIndex(sectionName) {
-	switch (sectionName) {
-		case "unfinished":
-			return 0;
-		case "partial":
-			return 1;
-		case "finished":
-			return 2;
-	}
-}
-
-// Get Interval title from shorthand interval
-function getNotifIntervalTitle(shorthand) {
-	switch (shorthand) {
-		case "5sec": return "Every 5 Seconds";
-		case "day": return "Every Day";
-		case "week": return "Every Week";
-		case "month": return "Every Month";
-		case "year": return "Every Year";
-		default: return "";
-	}
-}
-
-// Save Data
+// Saves tasks, local tasks.
 async function saveTaskData() {
 	try {
 		const taskDataString = JSON.stringify(tasks)
@@ -112,8 +108,6 @@ async function saveTaskData() {
 	}
 }
 
-
-
 // Footer item rendering for the list of tasks
 function renderFooterItem({section}) {
 	// If it's the last section, add a space underneath
@@ -127,39 +121,7 @@ function renderFooterItem({section}) {
 	return <View style={styles.listFooter} />
 }
 
-// Search Filtering
-function searchFilterCheck(itemName, filter) {
-	// NOTE: This assumes filter is already uppercase
-	if (settings.strictFiltering) {
-		return itemName.toUpperCase().indexOf(filter) === 0;
-	} else {
-		return itemName.toUpperCase().indexOf(filter) > -1;
-	}
-}
-
-// Date string formatting
-function formatDateString(dateString, dateMode) {
-	let dateObj = {};
-	if (typeof(dateString) == typeof("a"))
-		dateObj = new Date(dateString);
-	else
-		dateObj = dateString;
-	if (dateMode === "date") {
-		return dateObj.toLocaleString([], {
-			weekday: "short",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
-		})
-	}
-	if (dateMode === "time") {
-		return dateObj.toLocaleString([], {
-			hour: "2-digit",
-			minute: "2-digit",
-		})
-	}
-}
-
+// Clears Finished Tasks completed before cutoff specified in settings
 function clearOldFinishedTasks() {
 	if (settings.clearOldFinished) {
 		let removeIndices = [];
@@ -190,123 +152,11 @@ function clearOldFinishedTasks() {
 	}
 }
 
-// Notification Tasks
-async function createTaskNotification(task) {
-	const currentTime = new Date()
-	const notifyDate = new Date(task.notifyDate)
-	if (currentTime < notifyDate) {
-		console.log("Creating Notification for task", task.id);
-		 
-		let notificationTrigger = null; //notifyDate,
-		let notificationType = (task.repeatInterval ? repeatIntervalToType(task.repeatInterval) : "date");
-		switch (task.repeatInterval) {
-			case "5sec": {
-				notificationTrigger = {
-					seconds: 60,
-					repeats: true,
-				};
-				break;
-			}
-			case "day": {
-				notificationTrigger = {
-					hour: notifyDate.getHours(),
-					minute: notifyDate.getMinutes(),
-					repeats: true,
-				};
-				break;
-			}
-			case "week": {
-				notificationTrigger = {
-					hour: notifyDate.getHours(),
-					minute: notifyDate.getMinutes(),
-					weekday: notifyDate.getDay() + 1,
-					repeats: true,
-				};
-				break;
-			}
-			// Guess who has no monthly trigger?
-			case "year": {
-				notificationTrigger = {
-					hour: notifyDate.getHours(),
-					minute: notifyDate.getMinutes(),
-					day: notifyDate.getDate(),
-					month: notifyDate.getMonth() + 1,
-					repeats: true,
-				};
-				break;
-			}
-			default: {
-				notificationTrigger = notifyDate;
-				break;
-			}
-		}
-
-		console.log(notificationTrigger);
-
-		const result = await Notifications.scheduleNotificationAsync({
-			content: {
-				title: task.name,
-				body: task.desc,
-				color: "#74aaff",
-				categoryIdentifier: "taskNotifActions",
-				data: {
-					taskName: task.name,
-					startDate: notifyDate.toLocaleString()
-				}
-			},
-			identifier: task.id,
-			trigger: notificationTrigger,//notifyDate,
-		});
-		if (result) {
-			console.log("Notification successfully created (", task.id, ")");
-
-			const calTime = notifyDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-
-			const calItem = {
-				id: task.id,
-				type: "task",
-				title: task.name,
-				body: task.desc,
-				time: calTime,
-				creationDate: task.creationDate.toLocaleString(),
-				triggerData: notificationTrigger
-			}
-			store.dispatch(calActions.addCalendarItem(calItem, notificationType, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()));
-			console.log("Notification added to calendar (", task.id, ")");
-
-			try {
-				const calString = JSON.stringify(store.getState().calendar);
-				await AsyncStorage.setItem("@calendar", calString);
-				console.log("Calendar Data successfully saved.");
-			} catch (e) {
-				console.log("There was an error saving calendar data:");
-				console.log(e);
-			}
-		}
-	}
-}
-
-async function cancelTaskNotification(task) {
-	console.log("Cancelling Notification for task", task.id);
-	await Notifications.cancelScheduledNotificationAsync(task.id);
-	console.log("Notification successfully cancelled.");
-
-	const notifyDate = new Date(task.notifyDate);
-	const repeatInterval = (task.repeatInterval ? repeatIntervalToType(task.repeatInterval) : "date");
-	store.dispatch(calActions.deleteCalendarItem(task.id, repeatInterval, notifyDate.getFullYear(), notifyDate.getMonth(), notifyDate.getDate()))
-	console.log("Calendar Item successfully removed.");
-
-	try {
-		const calString = JSON.stringify(store.getState().calendar);
-		await AsyncStorage.setItem("@calendar", calString);
-		console.log("Calendar Data successfully saved.");
-	} catch (e) {
-		console.log("There was an error saving calendar data:");
-		console.log(e);
-	}
-}
 
 
+//
+// Main Tasks Page
+//
 
 function TasksMain({ navigation }) {
 
@@ -565,8 +415,8 @@ function TasksMain({ navigation }) {
 				}}
 			/>
 
-			{ emptyTasks() ? <Image style={styles.placeholderImage} source={NoTaskImage} /> : null }
-			{ emptyTasks() ? <Text style={styles.placeholderLabel} >Nothing to do...</Text> : null }
+			{ isTasksEmpty() ? <Image style={styles.placeholderImage} source={NoTaskImage} /> : null }
+			{ isTasksEmpty() ? <Text style={styles.placeholderLabel} >Nothing to do...</Text> : null }
 
 			<Menu style={styles.menuButton}>
 				<MenuTrigger>
@@ -635,8 +485,7 @@ function TasksMain({ navigation }) {
 							});
 						}}
 					/>
-					{/*
-					<MenuOption 
+					{settings.devMode ? <MenuOption 
 						text={"Log Scheduled"}
 						onSelect={() => {
 							Notifications.getAllScheduledNotificationsAsync()
@@ -644,15 +493,12 @@ function TasksMain({ navigation }) {
 									for (let i = 0; i < response.length; i++) {
 										console.log(response[i].identifier);
 										console.log(response[i].trigger);
+										console.log(new Date(response[i].trigger.value))
 									}
 								})
 								.catch(() => console.log("Couldn't get them :("));
 						}}
-					/>
-					<MenuOption 
-						text={"Local Filter: " + localTaskFilter}
-					/>
-					*/}
+					/> : null}
 				</MenuOptions>
 			</Menu>
 
@@ -660,6 +506,12 @@ function TasksMain({ navigation }) {
 		</View>
 	)
 }
+
+
+
+//
+// New Task / Task Modification Page
+//
 
 function NewTask({ route, navigation }) {
 	// For auto-skipping to description
@@ -735,22 +587,6 @@ function NewTask({ route, navigation }) {
 					placeholder={"Short Description"}
 				/>
 
-				<View style={[globalStyles.row, { width: "85%" }]}>
-					<Text style={[globalStyles.h2, { flex: 1, paddingLeft: 15 }]}>Notify Me</Text>
-					<Switch 
-						style={{ 
-							flex: 1, 
-							alignItems: "flex-end",
-							marginTop: 30,
-						}}
-						trackColor={{ false: "#16171a", true: "#74aaff" }}
-						thumbColor={"#f2f6ff"}
-						onValueChange={() => { 
-							setNotifEnabled(previousState => !previousState )
-						}}
-						value={notifEnabled}
-					/>
-				</View>
 				<View style={[globalStyles.row, { width: "85%", marginTop: 20 }]}>
 					<Pressable
 						style={{ flex: 1, padding: 15 }}
@@ -786,6 +622,23 @@ function NewTask({ route, navigation }) {
 							{formatDateString(notifDate, "time")}
 						</Text>
 					</Pressable>
+				</View>
+
+				<View style={[globalStyles.row, { width: "85%" }]}>
+					<Text style={[globalStyles.h2, { flex: 1, paddingLeft: 15 }]}>Notify Me</Text>
+					<Switch 
+						style={{ 
+							flex: 1, 
+							alignItems: "flex-end",
+							marginTop: 30,
+						}}
+						trackColor={{ false: "#16171a", true: "#74aaff" }}
+						thumbColor={"#f2f6ff"}
+						onValueChange={() => { 
+							setNotifEnabled(previousState => !previousState )
+						}}
+						value={notifEnabled}
+					/>
 				</View>
 
 				<View style={[globalStyles.row, { width: "85%", marginTop: 20 }]}>
@@ -840,6 +693,7 @@ function NewTask({ route, navigation }) {
 						}
 
 						if (mode === "addNew") {
+
 							store.dispatch(addTask(newTaskObj));
 
 							if (notifEnabled) {
@@ -851,7 +705,9 @@ function NewTask({ route, navigation }) {
 							console.log("Added Task with Name", taskName);
 
 							returnToScreen();
+
 						} else if (mode === "modify") {
+
 							// Get the index of the task in the data list it corresponds to
 							console.log("-------");
 							store.dispatch(modifyTask(taskMod.id, taskModSectionIndex, newTaskObj));
@@ -881,6 +737,7 @@ function NewTask({ route, navigation }) {
 							console.log("Modifications applied to task.");
 
 							returnToScreen();
+
 						}
 					}
 				}}
@@ -902,138 +759,3 @@ export default function TasksScreen({ navigation }) {
 		</Stack.Navigator>
 	)
 }
-
-
-
-const styles = StyleSheet.create({
-	logo: {
-		position: "absolute",
-		width: 200,
-		height: 50,
-		left: 15,
-		top: 15,
-	},
-
-
-
-	searchBar: {
-		width: "85%",
-		marginTop: 60,
-
-		backgroundColor: "#16171a",
-		borderRadius: 18,
-		//elevation: 0,
-
-		padding: 10,
-		height: 50,
-	},
-
-	searchIcon: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-
-	searchInput: {
-		flex: 8,
-		color: "#f2f6ff",
-		textAlign: "left",
-		fontFamily: "Inter-Medium",
-		fontSize: 18,
-	},
-
-	listBox: {
-		width: "85%",
-		marginTop: 15,
-	},
-
-	listFooter: {
-		backgroundColor: "#7c7f8e",
-		height: 2,
-
-		marginBottom: 15,
-		borderRadius: 2,
-	},
-
-	listFooterAlt: {
-		marginBottom: 30,
-	},
-
-
-
-	menuButton: {
-		position: "absolute",
-		
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-
-		width: 50,
-		height: 50,
-
-		right: 20,
-		top: 15,
-		//borderRadius: (65 / 2),
-	},
-
-	placeholderImage: {
-		position: "absolute",
-		
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-
-		width: 300,
-		height: 150,
-
-		top: 250,
-	},
-
-	placeholderLabel: {
-		position: "absolute",
-		
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-
-		textAlign: "center",
-
-		width: 400,
-		height: 50,
-
-		top: 380,
-
-		color: "#7c7f8e",
-		fontFamily: "Inter-Medium",
-		fontSize: 16,
-	},
-
-
-
-	taskInput: {
-		color: "#f2f6ff",
-
-		width: "85%",
-		marginTop: 10,
-		padding: 20,
-
-		borderBottomWidth: 2,
-		borderBottomColor: "#31333a",
-	},
-
-	taskNameInput: {
-		fontFamily: "Inter-Bold",
-		fontSize: 18,
-	},
-
-	taskDescInput: {
-		fontFamily: "Inter-Light",
-		fontSize: 16,
-	},
-
-	text: {
-		fontFamily: "Inter-Light",
-		fontSize: 24,
-		color: "#f2f6ff",
-	}
-})

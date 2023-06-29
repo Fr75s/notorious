@@ -1,4 +1,15 @@
+import store from "./redux/store";
 
+// Search Filtering
+export function searchFilterCheck(itemName, filter) {
+	// NOTE: This assumes filter is already uppercase
+	const settings = store.getState().settings;
+	if (settings.strictFiltering) {
+		return itemName.toUpperCase().indexOf(filter) === 0;
+	} else {
+		return itemName.toUpperCase().indexOf(filter) > -1;
+	}
+}
 
 export function taskIndexFromID(taskData, taskSectionIndex, taskID) {
 	for (let i = 0; i < taskData[taskSectionIndex].data.length; i++) {

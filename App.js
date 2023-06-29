@@ -23,7 +23,7 @@ import { setCalendar } from "./components/redux/CalendarActions";
 import { Provider } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import TasksScreen from "./screens/Tasks.js";
+import TasksScreen from "./screens/Tasks/Tasks.js";
 import NotesScreen from "./screens/Notes.js";
 import RecurScreen from "./screens/Recur";
 import CalendarScreen from "./screens/Calendar.js";

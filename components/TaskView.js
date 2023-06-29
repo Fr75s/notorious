@@ -38,10 +38,10 @@ export default function TaskView({ taskData, completionState, usePartialCompleti
 	}
 
 	const iconSize = 30;
-	
+
 	return (
 		<View style={styles.back}>
-			{taskData.notify ? <MaterialCommunityIcons 
+			{taskData.notify && (new Date(taskData.notifyDate) > new Date() || taskData.repeatInterval) ? <MaterialCommunityIcons 
 				style={styles.repeatIndicator}
 				name={taskData.repeatInterval ? "alarm" : "bell"} 
 				size={20} 

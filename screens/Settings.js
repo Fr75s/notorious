@@ -236,6 +236,15 @@ export default function SettingsScreen({ navigation }) {
 					}}
 				/>
 
+				<Text style={styles.settingHeader}>Developer</Text>
+						
+				<SettingSwitch 
+					label={"Enable Developer Mode"}
+					setting={"devMode"}
+				/>
+
+
+
 				<View 
 					style={{ height: 40 }}
 				/>

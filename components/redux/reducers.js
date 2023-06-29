@@ -47,6 +47,8 @@ const initialSettingsState = {
 	"notesDrawerOnLeft": false,
 	"verboseCalendar": false,
 	"disableNotificationPermissionPrompt": false,
+
+	"devMode": false,
 };
 
 const initialTasksState = [
